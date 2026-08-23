@@ -1,0 +1,712 @@
+<title>Case Spine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F7F8;--surface:#FFFFFF;--surface-2:#EAEEF1;--surface-3:#DFE5EA;
+  --ink:#11161C;--ink-2:#3C4653;--ink-3:#6A7583;
+  --rule:#D5DBE1;--rule-2:#C2CAD2;
+  --accent:#9E2B1E;--accent-2:#26556E;
+  --ok:#3F7350;--warn:#B26A1B;--crit:#A32718;
+  --ok-bg:#E2EDE5;--warn-bg:#F7ECDA;--crit-bg:#F6E4E1;--info-bg:#E1E9EF;
+  --grid:#E3E8ED;--shadow:0 1px 2px rgba(17,22,28,.05),0 8px 24px -14px rgba(17,22,28,.18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E1216;--surface:#161B21;--surface-2:#1D242C;--surface-3:#252E37;
+  --ink:#E9EDF1;--ink-2:#AFB9C5;--ink-3:#7B8693;
+  --rule:#28303A;--rule-2:#38424E;
+  --accent:#E17A66;--accent-2:#7BAECC;
+  --ok:#6FB185;--warn:#D9A153;--crit:#E27564;
+  --ok-bg:#17251C;--warn-bg:#2C2317;--crit-bg:#2E1B18;--info-bg:#18232C;
+  --grid:#232B34;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.65);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1216;--surface:#161B21;--surface-2:#1D242C;--surface-3:#252E37;
+  --ink:#E9EDF1;--ink-2:#AFB9C5;--ink-3:#7B8693;
+  --rule:#28303A;--rule-2:#38424E;
+  --accent:#E17A66;--accent-2:#7BAECC;
+  --ok:#6FB185;--warn:#D9A153;--crit:#E27564;
+  --ok-bg:#17251C;--warn-bg:#2C2317;--crit-bg:#2E1B18;--info-bg:#18232C;
+  --grid:#232B34;--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:0 22px 80px}
+h1,h2,h3{font-family:Spectral,Georgia,serif;margin:0;text-wrap:balance}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+button{font-family:inherit}
+
+header{padding:38px 0 20px}
+header h1{font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:-.022em;margin-top:12px;line-height:1.06}
+header .sub{max-width:640px;margin-top:12px;color:var(--ink-2)}
+.badge{display:inline-block;background:var(--warn-bg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);
+  padding:4px 10px;font-size:11px;font-family:"IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;font-weight:600;margin-top:14px}
+
+/* lens nav */
+nav{display:flex;gap:1px;background:var(--rule);border:1px solid var(--rule);margin:24px 0 22px;overflow-x:auto}
+nav button{flex:1 1 0;min-width:118px;background:var(--surface);border:none;padding:12px 10px 13px;cursor:pointer;
+  color:var(--ink-3);text-align:left;border-bottom:2px solid transparent}
+nav button .r{display:block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+nav button .t{display:block;font-size:14px;font-weight:600;color:var(--ink-2);font-family:Spectral,serif}
+nav button[aria-selected="true"]{background:var(--surface);border-bottom-color:var(--accent)}
+nav button[aria-selected="true"] .t{color:var(--ink)}
+nav button[aria-selected="true"] .r{color:var(--accent)}
+nav button:hover{background:var(--surface-2)}
+
+.lens{display:none}
+.lens.on{display:block}
+.intro{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent-2);padding:16px 20px;margin-bottom:22px;font-size:14.5px;line-height:1.6;max-width:88ch}
+.intro b{color:var(--ink)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:22px}
+.kpi{background:var(--surface);padding:14px 16px 16px}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;display:block;line-height:1.15}
+.kpi .k{font-size:11.5px;color:var(--ink-3);margin-top:4px;line-height:1.35}
+.kpi.hi .v{color:var(--accent)}
+
+.panel{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);margin-bottom:22px}
+.phead{padding:15px 19px 13px;border-bottom:1px solid var(--rule)}
+.phead h2{font-size:19px;font-weight:600;margin-top:6px;line-height:1.2}
+.phead p{margin:7px 0 0;font-size:13.5px;color:var(--ink-3);max-width:80ch;line-height:1.5}
+.pbody{padding:18px 19px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px}
+
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th{text-align:left;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:8px 11px;border-bottom:1px solid var(--rule-2);white-space:nowrap}
+td{padding:8px 11px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+tbody tr.clk{cursor:pointer}
+tbody tr.clk:hover{background:var(--surface-2)}
+tbody tr.sel{background:var(--info-bg)}
+
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)}
+.t-warn{background:var(--warn-bg);color:var(--warn)}
+.t-crit{background:var(--crit-bg);color:var(--crit)}
+.t-info{background:var(--info-bg);color:var(--accent-2)}
+
+.bar{height:6px;background:var(--surface-3);position:relative;min-width:48px;display:inline-block;width:100%}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent-2)}
+.bar.r i{background:var(--crit)}
+.bar.g i{background:var(--ok)}
+
+canvas{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+
+/* trace */
+.trace{display:flex;flex-direction:column;gap:0}
+.thop{display:grid;grid-template-columns:132px 1fr;gap:14px;padding:13px 0;border-bottom:1px solid var(--rule)}
+.thop:last-child{border-bottom:none}
+.thop .lbl{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding-top:2px}
+.thop .val{font-size:14px;line-height:1.5}
+.thop .val .k{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2)}
+.thop .val em{font-style:normal;color:var(--ink-3);font-size:12.5px}
+.finding{background:var(--crit-bg);border-left:3px solid var(--crit);padding:14px 17px;margin-top:16px;font-size:14px;line-height:1.55}
+.finding b{color:var(--crit)}
+
+/* architecture */
+.arch{overflow-x:auto;padding:6px}
+.arch svg{min-width:880px;display:block;width:100%;height:auto}
+.stackgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+.sc{background:var(--surface);padding:15px 17px}
+.sc h4{margin:0 0 3px;font-size:14.5px;font-family:"IBM Plex Sans",sans-serif;font-weight:600}
+.sc .src{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-2);margin-bottom:8px}
+.sc p{margin:0;font-size:13px;line-height:1.5;color:var(--ink-2)}
+ul.tight{margin:0;padding-left:19px}
+ul.tight li{margin-bottom:7px;font-size:14px;line-height:1.55}
+
+.foot{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-3);line-height:1.6}
+@media (max-width:640px){.wrap{padding:0 14px 60px}.pbody{padding:14px}.thop{grid-template-columns:1fr;gap:3px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Reference build &middot; one case ledger, six lenses</span>
+  <h1>Case Spine</h1>
+  <p class="sub">A single conformed row per case, joined to site, scanner, model version and
+  stratum &mdash; so that questions currently spanning seven disconnected systems become one query.
+  Every lens below is a projection over the same table.</p>
+  <span class="badge">Synthetic data &middot; no Heartflow records used</span>
+</header>
+
+<nav id="nav" role="tablist"></nav>
+
+<!-- ============ SPINE ============ -->
+<section class="lens on" id="l-spine">
+  <div class="intro">The spine is six columns: <b class="mono">case_id · site_id · scanner_id ·
+  model_version · timestamp · stratum</b>. Facts stay in the systems that own them; the spine
+  carries only keys. That is what makes this a two-week build rather than a two-year warehouse.</div>
+
+  <div class="kpis" id="k-spine"></div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">The join graph</span>
+      <h2>What references what</h2>
+      <p>Seven source systems, one grain. The dotted edges are the joins that do not exist today
+      &mdash; each one is a question nobody at Heartflow can currently ask.</p></div>
+    <div class="pbody arch">
+      <svg viewBox="0 0 900 350" role="img" aria-label="Diagram showing seven source systems feeding a central case spine, with derived lenses reading from it.">
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+          <g id="srcs"></g>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Case inspector</span>
+      <h2>One case, end to end</h2>
+      <p>Pick any case to see every fact the spine carries about it, across all seven systems.</p></div>
+    <div class="pbody">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <label class="eyebrow" for="caseSel">Case</label>
+        <select id="caseSel" style="font-family:'IBM Plex Mono',monospace;font-size:13px;padding:6px 9px;background:var(--surface-2);color:var(--ink);border:1px solid var(--rule-2)"></select>
+        <button id="randCase" style="background:var(--surface-2);border:1px solid var(--rule-2);color:var(--ink-2);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 11px;cursor:pointer">Random hazard case</button>
+      </div>
+      <div class="trace" id="inspector"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ OPERATIONS ============ -->
+<section class="lens" id="l-ops">
+  <div class="intro">Operations reads the spine for <b>difficulty</b>, not throughput. The question
+  is not how long a case took &mdash; it is whether the human changed the answer.</div>
+  <div class="kpis" id="k-ops"></div>
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 01</span><h2>Automation frontier</h2>
+      <p>Strata ordered by how often analyst correction moved an FFR value across 0.80. Automate
+      the safest first; the curve shows what volume that buys.</p></div>
+    <div class="pbody">
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+        <label class="eyebrow" for="tol">Residual risk tolerance</label>
+        <input type="range" id="tol" min="0" max="16" step="0.25" value="8" style="flex:1 1 200px;accent-color:var(--accent);min-width:170px">
+        <span class="mono" id="tolOut" style="font-size:13px"></span>
+      </div>
+      <div id="verdict" style="background:var(--surface-2);border-left:3px solid var(--accent);padding:13px 16px;margin-bottom:16px;font-size:14px;line-height:1.5"></div>
+      <canvas id="frontier" height="290"></canvas>
+      <div class="legend"><span><i style="background:var(--accent-2)"></i>Cumulative volume</span>
+        <span><i style="background:var(--crit)"></i>Stratum risk</span>
+        <span><i style="background:var(--accent)"></i>Tolerance</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 02</span><h2>Stratum register</h2>
+      <p>Aggregated by case characteristics only. Analyst identity is absent from the schema by
+      design &mdash; this cannot be repurposed for individual performance management.</p></div>
+    <div class="pbody"><div class="tscroll"><table id="strata">
+      <thead><tr><th>Stratum</th><th class="n">Cases</th><th class="n">Share</th><th class="n">Actionable</th><th style="width:100px">Rate</th><th class="n">Med. min</th><th>Disposition</th></tr></thead>
+      <tbody></tbody></table></div></div>
+  </div>
+</section>
+
+<!-- ============ QUALITY ============ -->
+<section class="lens" id="l-quality">
+  <div class="intro">Quality reads the same spine for <b>hazard realisation</b>. This is the lens
+  that turns ISO&nbsp;14971 residual risk from something you assert in a document into something you
+  measure against production.</div>
+  <div class="kpis" id="k-q"></div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 03</span><h2>Risk file, matched to live cases</h2>
+      <p>Each hazard in the risk file carries a signature &mdash; a predicate over case facts. The
+      spine evaluates it continuously. "Residual risk after controls" stops being an estimate.</p></div>
+    <div class="pbody"><div class="tscroll"><table id="hazards">
+      <thead><tr><th>ID</th><th>Hazard</th><th class="n">Matches</th><th class="n">Rate</th><th class="n">Complaints</th><th>Trend by model</th></tr></thead>
+      <tbody></tbody></table></div></div>
+  </div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 04 &middot; the cross-reference</span>
+      <h2>Complaint traversal</h2>
+      <p>Select a complaint. The spine resolves it to its case, that case's stratum, and that
+      stratum's trend across model versions &mdash; turning an anecdote into a signal. Today this
+      requires four people and a week.</p></div>
+    <div class="pbody">
+      <div class="g2">
+        <div><div class="tscroll" style="max-height:330px;overflow-y:auto"><table id="complaints">
+          <thead><tr><th>ID</th><th>Type</th><th class="n">Day</th><th>MDR</th></tr></thead>
+          <tbody></tbody></table></div></div>
+        <div><div class="trace" id="ctrace"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ENGINEERING ============ -->
+<section class="lens" id="l-eng">
+  <div class="intro">Engineering reads the spine for <b>release effect</b>. A model version is not
+  just a build artifact &mdash; it is a cohort of patients. This lens is the one that catches a
+  regression that throughput metrics never show.</div>
+  <div class="kpis" id="k-eng"></div>
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 05</span><h2>Model version &times; scanner make</h2>
+      <p>Actionable-correction rate broken out by release and by scanner manufacturer. A regression
+      confined to one vendor's reconstructions is invisible in an aggregate metric.</p></div>
+    <div class="pbody">
+      <div class="tscroll"><table id="mvxmake"><thead><tr><th>Model</th><th>Make</th><th class="n">Cases</th><th class="n">Actionable</th><th style="width:110px">Rate</th><th class="n">Med. min</th><th>Signal</th></tr></thead><tbody></tbody></table></div>
+      <div id="engFinding"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIELD ============ -->
+<section class="lens" id="l-field">
+  <div class="intro">Field service reads the spine for <b>site conformance</b>. Motion artifact
+  causes most rejections, and motion is a function of acquisition technique &mdash; which is
+  something a site controls and a field specialist can fix.</div>
+  <div class="kpis" id="k-field"></div>
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 06</span><h2>Site worklist</h2>
+      <p>Ranked by rejection rate, with achieved heart rate and nitroglycerin administration &mdash;
+      the two things the 2026 SCCT/SCAI consensus requires. Sites with a completed field visit show
+      before/after.</p></div>
+    <div class="pbody"><div class="tscroll"><table id="siteTbl">
+      <thead><tr><th>Site</th><th>Scanner</th><th class="n">Cases</th><th class="n">Reject</th><th class="n">Med. HR</th><th class="n">Nitro</th><th>Visit effect</th></tr></thead>
+      <tbody></tbody></table></div></div>
+  </div>
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Projection 07 &middot; the silent failure</span>
+      <h2>Detector transition</h2>
+      <p>Photon-counting CT measures roughly a third less total plaque volume than energy-integrating
+      detectors, and EID-derived thresholds do not transfer. When a site swaps scanners its numbers
+      move for reasons unrelated to its patients &mdash; with no error raised anywhere.</p></div>
+    <div class="pbody"><div id="detBox"></div></div>
+  </div>
+</section>
+
+<!-- ============ DEPLOYMENT ============ -->
+<section class="lens" id="l-deploy">
+  <div class="intro">Built entirely from components already in Heartflow's stack, as named in their
+  own job postings. <b>No new vendor, no new subprocessor, no new data egress</b> &mdash; which is
+  the difference between a security review measured in weeks and one measured in quarters.</div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Target architecture</span><h2>Inside their existing AWS landing zone</h2>
+      <p>Every box below appears verbatim in a current Heartflow requisition. That is deliberate:
+      the fastest architecture to get approved is the one the platform team is already funding.</p></div>
+    <div class="pbody arch">
+      <svg viewBox="0 0 900 400" role="img" aria-label="Deployment architecture: source systems ingested by Dagster into Redshift, exposed through Cube Cloud semantic layer to a Django application on EKS and to Power BI and Tableau.">
+        <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+        <g id="archg"></g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="stackgrid" id="stack"></div>
+
+  <div class="panel" style="margin-top:22px">
+    <div class="phead"><span class="eyebrow">Compliance posture</span><h2>Why this passes review</h2></div>
+    <div class="pbody">
+      <ul class="tight">
+        <li><b>Production &amp; quality-system software, not device software.</b> Validated under FDA
+        Computer Software Assurance (final Sept 2025, reissued 3 Feb 2026 to align with QMSR) &mdash;
+        risk-based, unscripted testing, automated test results as evidence. It <em>observes</em>; it
+        never routes a case. The moment a lens decides which cases skip human review, it crosses into
+        device software and a different regime.</li>
+        <li><b>PHI-free analytics layer.</b> Pseudonymous case surrogates, covariate summaries and
+        edit semantics only. No pixel data, no DICOM tags, no accession numbers, no raw mesh geometry.
+        Re-identification map is a separate access-controlled store that only Post-Market Quality can
+        traverse, because complaint investigation legally requires it.</li>
+        <li><b>No analyst identity in the spine.</b> Not pseudonymised &mdash; absent. Aggregation is
+        by case stratum, so the system is structurally incapable of individual performance monitoring.
+        That is what keeps Operations on side.</li>
+        <li><b>Runs in their account, their VPC.</b> Existing HITRUST, ISO&nbsp;27001 and SOC&nbsp;2
+        Type&nbsp;2 scope is unchanged. No vendor qualification, no new DPA.</li>
+        <li><b>Deploys into existing EKS node groups</b> using prefix delegation rather than
+        requesting new subnets &mdash; their public GitHub org carries a fork of AWS's subnet
+        IP-utilisation monitor, which suggests address exhaustion is a live constraint.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="phead"><span class="eyebrow">Delivery</span><h2>Access ladder</h2>
+      <p>What ships at each level of data access, so nothing is blocked waiting on security review
+      and nothing is rushed through it.</p></div>
+    <div class="pbody"><div class="tscroll"><table>
+      <thead><tr><th>Level</th><th>Access granted</th><th>Delivered</th><th class="n">Elapsed</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">0</td><td>None</td><td>Synthetic reference build (this), schema proposal, CSA validation plan</td><td class="n">done</td></tr>
+        <tr><td class="mono">1</td><td>Schema + field dictionary, no rows</td><td>Real data model, join design, metric definitions agreed with Ops and Quality</td><td class="n">wk 1&ndash;2</td></tr>
+        <tr><td class="mono">2</td><td>De-identified aggregates</td><td>Dagster assets, Cube semantic model, lenses against real distributions</td><td class="n">wk 3&ndash;5</td></tr>
+        <tr><td class="mono">3</td><td>Pseudonymised case-level in-VPC</td><td>Production portal, validation record signed, handover docs</td><td class="n">wk 6&ndash;10</td></tr>
+      </tbody></table></div></div>
+  </div>
+</section>
+
+<div class="foot">
+  <p>Synthetic corpus: 3,600 cases across 140 sites and two quarters, with complaints, MDRs and a
+  four-entry risk file referencing the same grain. Covariate structure follows published literature
+  and Heartflow's own disclosures &mdash; 26-minute median analyst time, 8&ndash;15% real-world
+  rejection, motion artifact causing ~78% of rejections, automation failure predicted by stents and
+  Agatston&nbsp;&gt;967, FFR threshold 0.80, photon-counting measuring ~⅓ lower plaque volume.
+  Generator: <span class="mono">portal/gen_spine.py</span>.</p>
+  <p>A demonstration of an architecture, not a claim about Heartflow's actual numbers.</p>
+</div>
+</div>
+
+<script>
+/*__DATA__*/
+</script>
+<script>
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct=(x,d=1)=>(x*100).toFixed(d)+'%';
+const med=a=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y);return s[s.length>>1]};
+const el=id=>document.getElementById(id);
+const SITE=Object.fromEntries(SITES.map(s=>[s.id,s]));
+const ACC=CASES.filter(c=>!c.rej);
+const HZ=Object.fromEntries(META.hazards.map(h=>[h.id,h]));
+const MV=META.models.map(m=>m[0]);
+const mvDay=Object.fromEntries(META.models);
+
+/* ---------- lenses ---------- */
+const LENSES=[
+  ['spine','Platform','Spine'],['ops','Operations','Difficulty'],
+  ['quality','Quality','Risk file'],['eng','Engineering','Releases'],
+  ['field','Field service','Sites'],['deploy','Delivery','Deployment']
+];
+el('nav').innerHTML=LENSES.map(([k,r,t],i)=>
+  `<button role="tab" data-k="${k}" aria-selected="${i===0}"><span class="r">${r}</span><span class="t">${t}</span></button>`).join('');
+el('nav').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.lens').forEach(s=>s.classList.toggle('on',s.id==='l-'+b.dataset.k));
+  if(b.dataset.k==='ops') drawFrontier();
+});
+
+/* ---------- strata ---------- */
+const caB=v=>v<100?'CAC<100':v<400?'CAC 100-400':v<1000?'CAC 400-1k':'CAC>1k';
+const moB=v=>v<0.6?'motion lo':v<1.4?'motion md':'motion hi';
+const stratum=c=>caB(c.ca)+' / '+moB(c.motion)+(c.stent?' / stent':'');
+function buildStrata(){
+  const m=new Map();
+  for(const c of ACC){const k=stratum(c);if(!m.has(k))m.set(k,[]);m.get(k).push(c);}
+  const out=[];
+  for(const [k,v] of m){ if(v.length<12)continue;
+    const cr=v.reduce((a,c)=>a+c.crossed,0);
+    out.push({k,n:v.length,share:v.length/ACC.length,cr,rate:cr/v.length,med:med(v.map(c=>c.min))});}
+  out.sort((a,b)=>a.rate-b.rate);
+  let cum=0; for(const s of out){cum+=s.share;s.cum=cum;}
+  return out;
+}
+const STRATA=buildStrata();
+
+/* ---------- KPI helper ---------- */
+const kpi=(id,arr)=>el(id).innerHTML=arr.map(([v,k,hi])=>
+  `<div class="kpi ${hi?'hi':''}"><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
+
+/* ================= SPINE ================= */
+kpi('k-spine',[
+  [CASES.length.toLocaleString(),'Cases on the spine',1],
+  [META.n_sites,'Sites'],[MV.length,'Model versions'],
+  [COMPLAINTS.length,'Complaints linked'],
+  [META.n_mdr,'MDR-reportable'],
+  [META.hazards.length,'Hazards with signatures']
+]);
+
+(function joinGraph(){
+  const srcs=[['Case management','Aurora'],['Label store','S3 / Redshift'],['Smarteeva','complaints'],
+              ['Ketryx','risk + tests'],['Salesforce','accounts'],['DICOM headers','scanner'],['Harness','releases']];
+  let s='';
+  srcs.forEach((x,i)=>{
+    const y=18+i*46;
+    s+=`<rect x="8" y="${y}" width="168" height="34" fill="var(--surface-2)" stroke="var(--rule-2)"/>
+        <text x="20" y="${y+15}" font-size="11.5" font-family="IBM Plex Sans,sans-serif" font-weight="600" fill="var(--ink)">${x[0]}</text>
+        <text x="20" y="${y+28}" font-size="9.5" fill="var(--ink-3)">${x[1]}</text>
+        <line x1="176" y1="${y+17}" x2="330" y2="175" stroke="var(--rule-2)" stroke-width="1"/>`;
+  });
+  s+=`<rect x="332" y="128" width="176" height="94" fill="var(--info-bg)" stroke="var(--accent-2)" stroke-width="1.5"/>
+      <text x="348" y="152" font-size="13" font-family="Spectral,serif" font-weight="600" fill="var(--ink)">CASE SPINE</text>
+      <text x="348" y="171" font-size="10" fill="var(--ink-2)">case · site · scanner</text>
+      <text x="348" y="186" font-size="10" fill="var(--ink-2)">model · time · stratum</text>
+      <text x="348" y="207" font-size="9.5" fill="var(--accent-2)">one row per case</text>`;
+  const lens=['Operations','Quality','Engineering','Field service','Regulatory'];
+  lens.forEach((l,i)=>{
+    const y=52+i*54;
+    s+=`<line x1="508" y1="175" x2="700" y2="${y+16}" stroke="var(--accent-2)" stroke-width="1" stroke-dasharray="3 3"/>
+        <rect x="700" y="${y}" width="192" height="32" fill="var(--surface-2)" stroke="var(--rule-2)"/>
+        <text x="714" y="${y+20}" font-size="11.5" font-family="IBM Plex Sans,sans-serif" fill="var(--ink)">${l} lens</text>`;
+  });
+  s+=`<text x="332" y="252" font-size="9.5" fill="var(--ink-3)">dotted = joins that do not exist today</text>`;
+  el('srcs').innerHTML=s;
+})();
+
+const hazCases=CASES.filter(c=>c.hz.length);
+function fillSel(){
+  const pick=[...hazCases.slice(0,60),...ACC.slice(0,40)];
+  el('caseSel').innerHTML=pick.map(c=>`<option value="${c.id}">case ${String(c.id).padStart(5,'0')}${c.hz.length?' · '+c.hz[0]:''}</option>`).join('');
+}
+fillSel();
+function inspect(id){
+  const c=CASES.find(x=>x.id===+id); if(!c)return;
+  const s=SITE[c.site];
+  const comp=COMPLAINTS.find(x=>x.case===c.id);
+  const hop=(l,v)=>`<div class="thop"><div class="lbl">${l}</div><div class="val">${v}</div></div>`;
+  el('inspector').innerHTML=
+    hop('Case management',`<span class="k">case ${String(c.id).padStart(5,'0')}</span> · day ${c.day} · <em>TAT ${c.tat} min</em>`)+
+    hop('Site / scanner',`${s.name} <em>(${s.region}${s.office?', office':''})</em><br><span class="k">${s.make} ${s.model} · ${c.det}</span>`)+
+    hop('Acquisition',`HR <span class="k">${c.hr}</span> · motion <span class="k">${c.motion}</span> · Agatston <span class="k">${Math.round(c.ca)}</span> · nitro <span class="k">${c.nitro?'yes':'no'}</span>${c.stent?' · <span class="tag t-warn">stent</span>':''}`)+
+    hop('Ingest',c.rej?`<span class="tag t-crit">rejected</span> <em>${c.reason.replace(/_/g,' ')}</em>`:`<span class="tag t-ok">accepted</span>`)+
+    (c.rej?'':
+      hop('Segmentation',`model <span class="k">${c.mv}</span> · confidence <span class="k">${c.conf}</span>`)+
+      hop('Correction',`${c.edits} edits · <span class="k">${c.min} min</span> · segments <span class="k">${c.segs.join(', ')}</span>`)+
+      hop('Result',`FFR <span class="k">${c.pre} → ${c.post}</span> ${c.crossed?'<span class="tag t-crit">crossed 0.80</span>':'<span class="tag t-ok">classification unchanged</span>'}${c.grey?' <span class="tag t-warn">grey zone</span>':''}<br><em>total plaque volume ${c.tpv} mm³</em>`)+
+      hop('Stratum',`<span class="k">${stratum(c)}</span>`))+
+    hop('Risk file',c.hz.length?c.hz.map(h=>`<span class="tag t-crit">${h}</span> ${HZ[h].title}`).join('<br>'):'<em>no hazard signature matched</em>')+
+    hop('Post-market',comp?`<span class="tag ${comp.mdr?'t-crit':'t-warn'}">${comp.type.replace(/_/g,' ')}</span> filed day ${comp.day}${comp.mdr?' · <b>MDR-reportable</b>':''}`:'<em>no complaint</em>');
+}
+el('caseSel').addEventListener('change',e=>inspect(e.target.value));
+el('randCase').addEventListener('click',()=>{
+  const c=hazCases[Math.floor(Math.random()*hazCases.length)];
+  if(![...el('caseSel').options].some(o=>o.value==c.id)){
+    const o=document.createElement('option');o.value=c.id;o.textContent='case '+String(c.id).padStart(5,'0')+' · '+c.hz[0];
+    el('caseSel').appendChild(o);
+  }
+  el('caseSel').value=c.id; inspect(c.id);
+});
+inspect(el('caseSel').value);
+
+/* ================= OPERATIONS ================= */
+kpi('k-ops',[
+  [pct(ACC.reduce((a,c)=>a+c.crossed,0)/ACC.length),'Actionable correction rate',1],
+  [pct(1-ACC.reduce((a,c)=>a+c.crossed,0)/ACC.length),'No classification change'],
+  [med(ACC.map(c=>c.min)).toFixed(0)+' min','Median analyst time'],
+  [pct((CASES.length-ACC.length)/CASES.length),'Reject rate'],
+  [pct(ACC.reduce((a,c)=>a+c.grey,0)/ACC.length),'Delivered in grey zone'],
+  [STRATA.length,'Strata tracked']
+]);
+function drawFrontier(){
+  const tol=+el('tol').value/100;
+  el('tolOut').textContent='≤ '+(tol*100).toFixed(2)+'%';
+  const elig=STRATA.filter(s=>s.rate<=tol);
+  const share=elig.reduce((a,s)=>a+s.share,0);
+  const cs=elig.reduce((a,s)=>a+s.n,0);
+  const resid=cs?elig.reduce((a,s)=>a+s.cr,0)/cs:0;
+  el('verdict').innerHTML=`At <b>≤${pct(tol,2)}</b> residual risk, <b>${elig.length}</b> of ${STRATA.length}
+    strata qualify — <b>${pct(share,0)}</b> of accepted volume at a blended residual rate of
+    <b>${pct(resid,2)}</b>.`;
+  const cv=el('frontier'),w=cv.clientWidth||820,h=290,dpr=devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const L=48,R=48,T=14,B=34,pw=w-L-R,ph=h-T-B;
+  const mr=Math.max(0.14,...STRATA.map(s=>s.rate));
+  x.font='10.5px "IBM Plex Mono",monospace';x.strokeStyle=css('--grid');
+  for(let i=0;i<=5;i++){const y=T+ph*i/5;x.beginPath();x.moveTo(L,y);x.lineTo(L+pw,y);x.stroke();
+    x.fillStyle=css('--ink-3');x.textAlign='right';x.fillText((100-i*20)+'%',L-8,y+4);
+    x.textAlign='left';x.fillText((mr*100*(1-i/5)).toFixed(1)+'%',L+pw+8,y+4);}
+  x.beginPath();x.moveTo(L,T+ph);
+  STRATA.forEach((s,i)=>x.lineTo(L+pw*(i+1)/STRATA.length,T+ph-ph*s.cum));
+  x.lineTo(L+pw,T+ph);x.closePath();x.fillStyle=css('--accent-2')+'22';x.fill();
+  x.beginPath();STRATA.forEach((s,i)=>{const px=L+pw*(i+1)/STRATA.length,py=T+ph-ph*s.cum;i?x.lineTo(px,py):x.moveTo(px,py)});
+  x.strokeStyle=css('--accent-2');x.lineWidth=2;x.stroke();
+  x.beginPath();STRATA.forEach((s,i)=>{const px=L+pw*(i+1)/STRATA.length,py=T+ph-ph*(s.rate/mr);i?x.lineTo(px,py):x.moveTo(px,py)});
+  x.strokeStyle=css('--crit');x.lineWidth=1.5;x.setLineDash([4,3]);x.stroke();x.setLineDash([]);
+  if(elig.length){const px=L+pw*elig.length/STRATA.length;
+    x.beginPath();x.moveTo(px,T);x.lineTo(px,T+ph);x.strokeStyle=css('--accent');x.lineWidth=2;x.stroke();
+    x.beginPath();x.arc(px,T+ph-ph*STRATA[elig.length-1].cum,4.5,0,7);x.fillStyle=css('--accent');x.fill();}
+  const mx=Math.max(...STRATA.map(s=>s.rate));
+  el('strata').tBodies[0].innerHTML=STRATA.map(s=>{
+    const d=s.rate<=tol?['t-ok','Automate']:s.rate<=tol*1.7?['t-warn','Monitor']:['t-crit','Human required'];
+    return `<tr><td class="mono">${s.k}</td><td class="n">${s.n}</td><td class="n">${pct(s.share)}</td>
+      <td class="n">${s.cr}</td><td><span class="bar r"><i style="width:${(s.rate/mx*100).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(s.rate,2)}</span></td>
+      <td class="n">${s.med.toFixed(0)}</td><td><span class="tag ${d[0]}">${d[1]}</span></td></tr>`;
+  }).join('');
+}
+el('tol').addEventListener('input',drawFrontier);
+drawFrontier();
+
+/* ================= QUALITY ================= */
+const compByHz={};for(const c of COMPLAINTS){if(c.hz)compByHz[c.hz]=(compByHz[c.hz]||0)+1;}
+kpi('k-q',[
+  [COMPLAINTS.length,'Complaints',1],[META.n_mdr,'MDR-reportable'],
+  [CASES.filter(c=>c.hz.includes('H-014')).length,'H-014 signature matches'],
+  [pct(COMPLAINTS.length/ACC.length,2),'Complaint rate'],
+  [COMPLAINTS.filter(c=>c.status==='under_investigation').length,'Open investigations'],
+  [META.hazards.length,'Hazards monitored']
+]);
+el('hazards').tBodies[0].innerHTML=META.hazards.map(h=>{
+  const m=CASES.filter(c=>c.hz.includes(h.id));
+  const spark=MV.map(v=>{const s=CASES.filter(c=>c.mv===v&&!c.rej);
+    return s.length? m.filter(c=>c.mv===v).length/s.length : 0;});
+  const mx=Math.max(...spark,0.001);
+  return `<tr><td class="mono">${h.id}</td><td style="max-width:300px">${h.title}
+      <div style="font-size:11px;color:var(--ink-3);margin-top:3px">controls: ${h.controls.join(' · ')}</div></td>
+    <td class="n">${m.length}</td><td class="n">${pct(m.length/CASES.length,2)}</td>
+    <td class="n">${compByHz[h.id]||0}</td>
+    <td>${spark.map((v,i)=>`<span title="${MV[i]}" style="display:inline-block;width:22px;height:${Math.max(3,v/mx*26).toFixed(0)}px;background:var(--crit);opacity:${0.45+0.55*v/mx};margin-right:3px;vertical-align:bottom"></span>`).join('')}
+      <div style="font-size:10px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${MV.join(' ')}</div></td></tr>`;
+}).join('');
+
+el('complaints').tBodies[0].innerHTML=COMPLAINTS.map(c=>
+  `<tr class="clk" data-c="${c.id}"><td class="mono">C-${String(c.id).padStart(3,'0')}</td>
+   <td>${c.type.replace(/_/g,' ')}</td><td class="n">${c.day}</td>
+   <td>${c.mdr?'<span class="tag t-crit">MDR</span>':'<span class="tag t-info">no</span>'}</td></tr>`).join('');
+function traceComplaint(id){
+  const cp=COMPLAINTS.find(x=>x.id===+id); const c=CASES.find(x=>x.id===cp.case); const s=SITE[c.site];
+  document.querySelectorAll('#complaints tr').forEach(r=>r.classList.toggle('sel',r.dataset.c==id));
+  const st=stratum(c);
+  const peers=ACC.filter(x=>stratum(x)===st);
+  const rate=peers.reduce((a,x)=>a+x.crossed,0)/peers.length;
+  const byMv=MV.map(v=>{const p=peers.filter(x=>x.mv===v);
+    return [v,p.length,p.length?p.reduce((a,x)=>a+x.crossed,0)/p.length:0];}).filter(r=>r[1]>8);
+  const worst=byMv.reduce((a,b)=>b[2]>a[2]?b:a,byMv[0]||['',0,0]);
+  const hop=(l,v)=>`<div class="thop"><div class="lbl">${l}</div><div class="val">${v}</div></div>`;
+  el('ctrace').innerHTML=
+    hop('Complaint',`<span class="k">C-${String(cp.id).padStart(3,'0')}</span> · ${cp.type.replace(/_/g,' ')} · day ${cp.day} ${cp.mdr?'<span class="tag t-crit">MDR</span>':''}`)+
+    hop('→ Case',`<span class="k">case ${String(c.id).padStart(5,'0')}</span> · day ${c.day} · FFR ${c.pre} → ${c.post}`)+
+    hop('→ Site',`${s.name}<br><span class="k">${s.make} ${s.model} · ${c.det}</span>`)+
+    hop('→ Hazard',cp.hz?`<span class="tag t-crit">${cp.hz}</span> ${HZ[cp.hz].title}`:'<em>unmatched</em>')+
+    hop('→ Stratum',`<span class="k">${st}</span> · ${peers.length} peer cases · actionable ${pct(rate,2)}`)+
+    hop('→ By model',byMv.map(r=>`<span class="k">${r[0]}</span> ${pct(r[2],2)} <em>(n=${r[1]})</em>`).join('<br>'))+
+    `<div class="finding"><b>Not an anecdote.</b> This complaint sits in a stratum carrying
+      <b>${peers.length}</b> cases at <b>${pct(rate,2)}</b> actionable-correction rate, peaking at
+      <b>${pct(worst[2],2)}</b> under <b>${worst[0]}</b>. Today this traversal spans Smarteeva, the
+      case store, the label store and Ketryx — four systems, four people, about a week.</div>`;
+}
+el('complaints').addEventListener('click',e=>{const r=e.target.closest('tr');if(r&&r.dataset.c)traceComplaint(r.dataset.c);});
+if(COMPLAINTS.length)traceComplaint(COMPLAINTS.find(c=>c.hz==='H-014')?.id ?? COMPLAINTS[0].id);
+
+/* ================= ENGINEERING ================= */
+const MAKES=[...new Set(SITES.map(s=>s.make))].sort();
+kpi('k-eng',[
+  [MV.length,'Model versions in window'],
+  [MV[MV.length-1],'Current',1],
+  [ACC.length.toLocaleString(),'Cases evaluated'],
+  [MAKES.length,'Scanner makes'],
+  [pct(ACC.reduce((a,c)=>a+c.crossed,0)/ACC.length),'Blended actionable'],
+  [med(ACC.map(c=>c.min)).toFixed(0)+' min','Median analyst time']
+]);
+(function(){
+  const rows=[]; let worst=null;
+  for(const v of MV) for(const mk of MAKES){
+    const s=ACC.filter(c=>c.mv===v&&SITE[c.site].make===mk);
+    if(s.length<40)continue;
+    const r=s.reduce((a,c)=>a+c.crossed,0)/s.length;
+    const base=ACC.filter(c=>SITE[c.site].make===mk&&c.mv===MV[0]);
+    const b=base.length?base.reduce((a,c)=>a+c.crossed,0)/base.length:r;
+    const lift=b?r/b:1;
+    rows.push({v,mk,n:s.length,cr:s.reduce((a,c)=>a+c.crossed,0),r,lift,med:med(s.map(c=>c.min))});
+    if(!worst||lift>worst.lift)worst={v,mk,r,b,lift,n:s.length};
+  }
+  const mx=Math.max(...rows.map(r=>r.r));
+  el('mvxmake').tBodies[0].innerHTML=rows.map(r=>{
+    const sig=r.lift>=1.25?['t-crit','regression']:r.lift<=0.8?['t-ok','improved']:['t-info','stable'];
+    return `<tr><td class="mono">${r.v}</td><td>${r.mk}</td><td class="n">${r.n}</td><td class="n">${r.cr}</td>
+      <td><span class="bar r"><i style="width:${(r.r/mx*100).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(r.r,2)}</span></td>
+      <td class="n">${r.med.toFixed(0)}</td><td><span class="tag ${sig[0]}">${sig[1]}</span></td></tr>`;
+  }).join('');
+  if(worst&&worst.lift>1.25){
+    el('engFinding').innerHTML=`<div class="finding"><b>Signal found.</b> <span class="mono">${worst.v}</span>
+      raised actionable-correction rate on <b>${worst.mk}</b> reconstructions from ${pct(worst.b,2)} to
+      <b>${pct(worst.r,2)}</b> — a ${worst.lift.toFixed(2)}× lift across ${worst.n} cases — while other
+      manufacturers held flat. Median analyst time barely moved, so no throughput dashboard would have
+      caught this. It is visible only because release identity and clinical outcome sit on the same row.</div>`;
+  }
+})();
+
+/* ================= FIELD ================= */
+const bySite={};for(const c of CASES){(bySite[c.site]=bySite[c.site]||[]).push(c);}
+const siteRows=SITES.map(s=>{
+  const all=bySite[s.id]||[];if(all.length<8)return null;
+  const rej=all.filter(c=>c.rej).length/all.length;
+  const visit=s.visits.length?s.visits[0]:null;
+  let pre=null,post=null;
+  if(visit!==null){
+    const a=all.filter(c=>c.day<visit),b=all.filter(c=>c.day>=visit);
+    if(a.length>4&&b.length>4){pre=a.filter(c=>c.rej).length/a.length;post=b.filter(c=>c.rej).length/b.length;}
+  }
+  return {s,n:all.length,rej,hr:med(all.map(c=>c.hr)),nitro:all.filter(c=>c.nitro).length/all.length,pre,post};
+}).filter(Boolean).sort((a,b)=>b.rej-a.rej);
+kpi('k-field',[
+  [SITES.length,'Sites'],
+  [pct((CASES.length-ACC.length)/CASES.length),'Network reject rate',1],
+  [siteRows.filter(r=>r.rej>0.15).length,'Sites above 15%'],
+  [siteRows.filter(r=>r.pre!==null).length,'Field visits completed'],
+  [SITES.filter(s=>s.switch!==null).length,'Detector transitions'],
+  [pct(CASES.filter(c=>c.nitro).length/CASES.length,0),'Nitro administered']
+]);
+el('siteTbl').tBodies[0].innerHTML=siteRows.slice(0,22).map(r=>{
+  const eff=r.pre===null?'<em style="color:var(--ink-3);font-size:12px">no visit</em>':
+    `<span class="mono" style="font-size:11.5px">${pct(r.pre)} → ${pct(r.post)}</span>
+     <span class="tag ${r.post<r.pre?'t-ok':'t-warn'}">${r.post<r.pre?'improved':'flat'}</span>`;
+  return `<tr><td>${r.s.name}<div style="font-size:10.5px;color:var(--ink-3)">${r.s.region}${r.s.office?' · office':''}</div></td>
+    <td style="font-size:12px">${r.s.make}<div style="font-size:10.5px;color:var(--ink-3)">${r.s.model} · ${r.s.det}</div></td>
+    <td class="n">${r.n}</td>
+    <td><span class="bar r"><i style="width:${Math.min(100,r.rej*400).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(r.rej)}</span></td>
+    <td class="n">${r.hr.toFixed(0)}</td><td class="n">${pct(r.nitro,0)}</td><td>${eff}</td></tr>`;
+}).join('');
+
+(function detector(){
+  const sw=SITES.filter(s=>s.switch!==null);
+  el('detBox').innerHTML=sw.map(s=>{
+    const all=bySite[s.id]||[];
+    const a=all.filter(c=>c.day<s.switch&&!c.rej),b=all.filter(c=>c.day>=s.switch&&!c.rej);
+    if(a.length<5||b.length<5)return '';
+    const ma=med(a.map(c=>c.tpv)),mb=med(b.map(c=>c.tpv));
+    return `<div style="border:1px solid var(--rule);padding:15px 17px;margin-bottom:13px;background:var(--surface-2)">
+      <div style="font-weight:600;margin-bottom:3px">${s.name}</div>
+      <div class="mono" style="font-size:11.5px;color:var(--ink-3);margin-bottom:11px">switched EID → PCD on day ${s.switch} · ${s.make} ${s.model}</div>
+      <div style="display:flex;gap:26px;flex-wrap:wrap">
+        <div><div class="eyebrow">Median TPV before</div><div class="mono" style="font-size:19px">${ma.toFixed(0)} mm³</div><div style="font-size:11px;color:var(--ink-3)">n=${a.length}</div></div>
+        <div><div class="eyebrow">After</div><div class="mono" style="font-size:19px;color:var(--crit)">${mb.toFixed(0)} mm³</div><div style="font-size:11px;color:var(--ink-3)">n=${b.length}</div></div>
+        <div><div class="eyebrow">Shift</div><div class="mono" style="font-size:19px;color:var(--crit)">${((mb/ma-1)*100).toFixed(1)}%</div><div style="font-size:11px;color:var(--ink-3)">no error raised</div></div>
+      </div></div>`;
+  }).join('')+
+  `<div class="finding"><b>Silent by construction.</b> Nothing failed. No case was rejected, no
+   complaint filed. The site's plaque volumes simply moved a third because the detector changed —
+   and any nomogram percentile derived from energy-integrating data now misclassifies these patients.
+   Detectable only if detector generation is carried on the case row.</div>`;
+})();
+
+/* ================= DEPLOYMENT ================= */
+(function arch(){
+  const col=(x,y,w,h,t,s,fill)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill||'var(--surface-2)'}" stroke="var(--rule-2)"/>
+    <text x="${x+12}" y="${y+20}" font-size="12" font-family="IBM Plex Sans,sans-serif" font-weight="600" fill="var(--ink)">${t}</text>
+    <text x="${x+12}" y="${y+35}" font-size="10" fill="var(--ink-3)">${s}</text>`;
+  let s='';
+  const srcs=[['Aurora / RDS','case management'],['S3 label store','analyst corrections'],
+              ['Smarteeva','complaints · Salesforce'],['Ketryx','requirements · risk · tests'],
+              ['DICOM headers','scanner + detector']];
+  srcs.forEach((x,i)=>{s+=col(10,14+i*62,178,46,x[0],x[1]);
+    s+=`<line x1="188" y1="${37+i*62}" x2="246" y2="${37+i*62}" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#a2)" color="var(--ink-3)"/>`;});
+  s+=col(248,110,132,110,'Dagster','software-defined assets','var(--info-bg)');
+  s+=`<line x1="380" y1="165" x2="424" y2="165" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#a2)" color="var(--ink-3)"/>`;
+  s+=col(426,110,140,110,'Redshift','spine + dimensions','var(--info-bg)');
+  s+=`<line x1="566" y1="165" x2="610" y2="165" stroke="var(--ink-3)" stroke-width="1.2" marker-end="url(#a2)" color="var(--ink-3)"/>`;
+  s+=col(612,96,150,138,'Cube Cloud','semantic layer','var(--info-bg)');
+  s+=`<text x="620" y="196" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="var(--accent-2)">one metric</text>
+      <text x="620" y="210" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="var(--accent-2)">definition</text>`;
+  const outs=[['Portal on EKS','Django · TypeScript',40],['Power BI','exec reporting',124],['Tableau','operations',208]];
+  for(const [title,sub,y] of outs){
+    s+=`<line x1="762" y1="165" x2="794" y2="${y+22}" stroke="var(--accent-2)" stroke-width="1.1" stroke-dasharray="3 3"/>`;
+    s+=col(796,y,96,44,title,sub);
+  }
+  s+=`<text x="248" y="256" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="var(--ink-3)">Terraform · GitHub Actions → Harness · Playwright E2E · k6 load · all inside the existing VPC</text>`;
+  el('archg').innerHTML=s;
+})();
+
+el('stack').innerHTML=[
+  ['Orchestration','Dagster','Software-defined assets per source system. Named in their IT Director, Data Services requisition.'],
+  ['Warehouse','Redshift','The spine and its dimensions. Already their warehouse; no new store introduced.'],
+  ['Semantic layer','Cube Cloud','The critical piece: <b>actionable_correction_rate</b> defined once and served to the portal, Power BI and Tableau alike. Ends the argument about whose number is right.'],
+  ['Application','Django + TypeScript on EKS','Their backend framework, their frontend language, their cluster. Behind the existing ALB and IdP.'],
+  ['Auth','OIDC via existing IdP','Role-scoped lenses map to identity-provider groups. Nobody receives the union by default.'],
+  ['CI/CD','GitHub Actions → Harness','Both named in their test requisitions. Playwright for E2E, k6 for load — also both named.'],
+  ['Traceability','Ketryx API','Closes the gap their own Senior Test Engineer posting describes: "between code commits and Ketryx-generated audit evidence."'],
+  ['Infrastructure','Terraform','Their IaC. Deploys into existing node groups; requests no new subnets.'],
+].map(([k,v,d])=>`<div class="sc"><div class="src">${k}</div><h4>${v}</h4><p>${d}</p></div>`).join('');
+
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(drawFrontier,150)});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawFrontier);
+</script>

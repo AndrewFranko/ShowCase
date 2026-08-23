@@ -1,0 +1,4 @@
+[console_scripts]
+spine-build = spine.build:main
+spine-generate = spine.generate:main
+spine-serve = app.main:dev

@@ -1,0 +1,1512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Case Spine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F4F6F8;--surface:#fff;--surface-2:#E9EDF1;--surface-3:#DCE3E9;
+  --ink:#0F141A;--ink-2:#3A4451;--ink-3:#69747F;--rule:#D3DAE1;--rule-2:#BFC8D1;
+  --accent:#9E2B1E;--accent-2:#24556E;
+  --ok:#3B7350;--warn:#B06818;--crit:#A32718;
+  --ok-bg:#E1EDE5;--warn-bg:#F7EBD8;--crit-bg:#F6E3E0;--info-bg:#DFE8EF;
+  --flow-hi:#2C6E8F;--flow-lo:#B33A28;
+  --shadow:0 1px 2px rgba(15,20,26,.05),0 10px 30px -18px rgba(15,20,26,.3);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --ground:#0C1014;--surface:#141A20;--surface-2:#1B232B;--surface-3:#242E37;
+  --ink:#E9EDF1;--ink-2:#AEB9C4;--ink-3:#78838F;--rule:#252E37;--rule-2:#36414D;
+  --accent:#E27C67;--accent-2:#7CB0CE;
+  --ok:#6FB185;--warn:#D9A153;--crit:#E27564;
+  --ok-bg:#16241B;--warn-bg:#2B2216;--crit-bg:#2D1A17;--info-bg:#17222B;
+  --flow-hi:#6FAFCE;--flow-lo:#E0705B;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -18px rgba(0,0,0,.8);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font:15px/1.6 "IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:0 22px 90px}
+h1,h2,h3{font-family:Spectral,Georgia,serif;margin:0;text-wrap:balance}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3)}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+button{font-family:inherit}
+canvas{display:block;width:100%;height:auto}
+
+header{padding:52px 0 26px}
+header h1{font-size:clamp(30px,5.2vw,50px);font-weight:700;letter-spacing:-.025em;
+  line-height:1.03;margin-top:14px}
+header .thesis{max-width:62ch;margin-top:18px;font-size:18px;line-height:1.55;color:var(--ink-2)}
+header .thesis b{color:var(--ink);font-weight:600}
+.synthetic{display:inline-block;background:var(--warn-bg);color:var(--warn);
+  border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);padding:4px 10px;
+  font:600 10.5px "IBM Plex Mono",monospace;letter-spacing:.09em;text-transform:uppercase;margin-top:18px}
+
+nav{display:flex;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:26px 0 24px;overflow-x:auto;position:sticky;top:0;z-index:20}
+nav button{flex:1 0 auto;min-width:104px;background:var(--surface);border:0;
+  border-bottom:2px solid transparent;padding:11px 13px;cursor:pointer;
+  font:600 14px Spectral,serif;color:var(--ink-2);white-space:nowrap}
+nav button[aria-selected=true]{border-bottom-color:var(--accent);color:var(--ink)}
+nav button:hover{background:var(--surface-2)}
+.lens{display:none}.lens.on{display:block}
+
+.hero{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);
+  padding:30px 32px 26px;margin-bottom:24px}
+.hero .big{font-family:"IBM Plex Mono",monospace;font-size:clamp(48px,10vw,84px);
+  font-weight:600;letter-spacing:-.045em;line-height:.95;color:var(--accent);
+  font-variant-numeric:tabular-nums}
+.hero .cap{font-size:19px;line-height:1.45;margin-top:12px;max-width:56ch}
+.hero .sub{font-size:14px;color:var(--ink-3);margin-top:12px;max-width:70ch}
+
+.finding-card{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);
+  margin-bottom:24px}
+.fc-head{padding:20px 24px 16px;border-bottom:1px solid var(--rule)}
+.fc-head .num{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--accent)}
+.fc-head h2{font-size:clamp(21px,3vw,27px);font-weight:600;letter-spacing:-.015em;
+  margin-top:8px;line-height:1.18}
+.fc-head p{margin:10px 0 0;font-size:15px;color:var(--ink-2);max-width:74ch;line-height:1.55}
+.fc-body{padding:22px 24px}
+.fc-foot{padding:16px 24px 18px;border-top:1px solid var(--rule);background:var(--surface-2);
+  font-size:14px;line-height:1.55}
+.fc-foot b{color:var(--accent)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;
+  font:11.5px "IBM Plex Mono",monospace;color:var(--ink-3)}
+.legend i{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px}
+
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin:18px 0 0}
+.statrow div{background:var(--surface);padding:13px 15px}
+.statrow .v{display:block;font:600 22px "IBM Plex Mono",monospace;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.statrow .k{font-size:11.5px;color:var(--ink-3);margin-top:3px;display:block;line-height:1.35}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);margin-bottom:22px}
+.kpi{background:var(--surface);padding:13px 15px 15px}
+.kpi .v{display:block;font:600 23px "IBM Plex Mono",monospace;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.kpi .k{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.kpi.hi .v{color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--rule);margin-bottom:22px;box-shadow:var(--shadow)}
+.ph{padding:15px 19px 13px;border-bottom:1px solid var(--rule)}
+.ph h2{font-size:19px;font-weight:600;margin-top:5px}
+.ph p{margin:7px 0 0;font-size:13.5px;color:var(--ink-3);max-width:84ch;line-height:1.5}
+.pb{padding:17px 19px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th{text-align:left;font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);padding:8px 10px;
+  border-bottom:1px solid var(--rule-2);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--rule)}
+tr:last-child td{border-bottom:none}
+.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  text-align:right;white-space:nowrap}
+tbody tr.clk{cursor:pointer}
+tbody tr.clk:hover{background:var(--surface-2)}
+tbody tr.sel{background:var(--info-bg)}
+.tag{display:inline-block;font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 6px;white-space:nowrap}
+.ok{background:var(--ok-bg);color:var(--ok)}.warn{background:var(--warn-bg);color:var(--warn)}
+.crit{background:var(--crit-bg);color:var(--crit)}.info{background:var(--info-bg);color:var(--accent-2)}
+.bar{display:inline-block;width:100%;min-width:44px;height:6px;background:var(--surface-3);position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--crit)}
+.ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+input[type=range]{flex:1 1 220px;accent-color:var(--accent);min-width:170px}
+select,.btn{font:12.5px "IBM Plex Mono",monospace;padding:6px 11px;background:var(--surface-2);
+  color:var(--ink);border:1px solid var(--rule-2);cursor:pointer}
+.verdict{background:var(--surface-2);border-left:3px solid var(--accent);padding:13px 16px;
+  margin-bottom:14px;font-size:14px}
+.trace .hop{display:grid;grid-template-columns:124px 1fr;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--rule)}
+.trace .hop:last-child{border:0}
+/* grid items default to min-width:auto, so an unbreakable token (the 64-char
+   manifest hash, long shas in the traversal) forces the column past a narrow
+   viewport and the whole page scrolls sideways. Let long tokens wrap instead. */
+.trace .hop>div{min-width:0;overflow-wrap:anywhere}
+.trace .lbl{font:10px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.finding{background:var(--crit-bg);border-left:3px solid var(--crit);padding:13px 16px;
+  margin-top:14px;font-size:13.5px;line-height:1.55}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.note{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent-2);
+  padding:16px 19px;margin-bottom:22px;font-size:14px;line-height:1.6}
+.note .eyebrow{display:block;margin-bottom:8px;color:var(--accent-2)}
+footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;color:var(--ink-3);line-height:1.6}
+@media(max-width:640px){.wrap{padding:0 15px 70px}.trace .hop{grid-template-columns:1fr;gap:2px}
+  .hero{padding:22px}.fc-body{padding:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">One case ledger &middot; seven source systems &middot; read-only</span>
+  <h1>What the humans are actually for</h1>
+  <p class="thesis">Cost of revenue is analyst minutes, and the margin plan is to automate
+  them away. Before that can be done safely, someone has to answer a question nobody
+  currently measures: <b>when a person corrects the machine, does the patient's answer
+  change?</b></p>
+  <span class="synthetic">Synthetic data &middot; no Heartflow records</span>
+  <div class="ctl" style="margin-top:22px;max-width:680px">
+    <input id="askIn" type="text" placeholder="Ask the spine — e.g. any confirmed regressions?"
+      style="flex:1 1 300px;font:13.5px 'IBM Plex Sans',sans-serif;padding:9px 12px;
+      background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+    <button class="btn" id="askBtn">Ask</button>
+  </div>
+  <div id="askOut" class="verdict" style="display:none;max-width:680px;margin-top:10px"></div>
+</header>
+
+<nav id="nav" role="tablist"></nav>
+
+<section class="lens on" id="l-findings">
+  <div class="hero">
+    <span class="eyebrow">The number this portal exists to produce</span>
+    <div class="big" id="heroBig">&mdash;</div>
+    <p class="cap" id="heroCap">&hellip;</p>
+    <p class="sub" id="heroSub"></p>
+    <div class="statrow" id="heroStats"></div>
+  </div>
+
+  <article class="finding-card">
+    <div class="fc-head">
+      <span class="num">FINDING 01</span>
+      <h2>The expensive cases are not the ones that matter</h2>
+      <p>Every accepted case gets a human. Each bar is the analyst-hours spent at that level
+      of effort, split by whether the correction moved an FFR value across the 0.80 decision
+      threshold.</p>
+    </div>
+    <div class="fc-body">
+      <canvas id="vizEffort" height="300"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--flow-hi)"></i>Hours where the human confirmed the machine</span>
+        <span><i style="background:var(--flow-lo)"></i>Hours where the human changed the answer</span>
+      </div>
+    </div>
+    <div class="fc-foot" id="footEffort">&hellip;</div>
+  </article>
+
+  <article class="finding-card">
+    <div class="fc-head">
+      <span class="num">FINDING 02</span>
+      <h2>Most correction is confirmation</h2>
+      <p>How far each correction moved the worst vessel's FFR. The mass at zero is work that
+      produced no diagnostic change. The red tail is where the human earned the case.</p>
+    </div>
+    <div class="fc-body">
+      <canvas id="vizDelta" height="270"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--flow-hi)"></i>Classification unchanged</span>
+        <span><i style="background:var(--flow-lo)"></i>Crossed the 0.80 threshold</span>
+      </div>
+    </div>
+    <div class="fc-foot" id="footDelta">&hellip;</div>
+  </article>
+
+  <article class="finding-card">
+    <div class="fc-head">
+      <span class="num">FINDING 03</span>
+      <h2>A release broke one scanner vendor and nothing else noticed</h2>
+      <p>Actionable-correction rate by release, one line per scanner manufacturer. A
+      regression confined to a single vendor's reconstructions is invisible in an aggregate
+      metric &mdash; and invisible in any throughput dashboard, because the minutes barely
+      moved.</p>
+    </div>
+    <div class="fc-body">
+      <canvas id="vizRelease" height="290"></canvas>
+      <div class="legend" id="legRelease"></div>
+    </div>
+    <div class="fc-foot" id="footRelease">&hellip;</div>
+  </article>
+
+  <article class="finding-card">
+    <div class="fc-head">
+      <span class="num">FINDING 04</span>
+      <h2>Two sites' plaque numbers fell by a third overnight</h2>
+      <p>Median total plaque volume over time. Photon-counting detectors measure roughly a
+      third less plaque than energy-integrating ones, and thresholds derived from the old
+      detector do not transfer. Nothing failed: no rejection, no complaint, no alert. The
+      numbers simply stepped.</p>
+    </div>
+    <div class="fc-body">
+      <canvas id="vizDetector" height="300"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--flow-hi)"></i>Energy-integrating (EID)</span>
+        <span><i style="background:var(--flow-lo)"></i>Photon-counting (PCD)</span>
+        <span><i style="background:var(--ink-3)"></i>Control site, never migrated</span>
+      </div>
+    </div>
+    <div class="fc-foot" id="footDetector">&hellip;</div>
+  </article>
+
+  <article class="finding-card">
+    <div class="fc-head">
+      <span class="num">FINDING 05</span>
+      <h2>Difficulty is not spread evenly across patients</h2>
+      <p>Each dot is a subgroup with its 95% confidence interval. Distance from the
+      best-performing arm is the disparity. Being statistically detectable is not the same
+      as being worth acting on.</p>
+    </div>
+    <div class="fc-body">
+      <canvas id="vizDisparity" height="330"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--crit)"></i>Escalated</span>
+        <span><i style="background:var(--warn)"></i>Significant, below the effect floor</span>
+        <span><i style="background:var(--ink-3)"></i>No material difference</span>
+      </div>
+    </div>
+    <div class="fc-foot" id="footDisparity">&hellip;</div>
+  </article>
+
+  <div class="note">
+    <span class="eyebrow">What ties these together</span>
+    <p>None of the five is a new data source. All five are the same table read five ways
+    &mdash; one row per case, joined to site, scanner, model version and stratum. Finding 03
+    needs release identity beside clinical outcome. Finding 04 needs detector generation
+    resolved at scan time. Finding 05 needs patient covariates beside correction impact.
+    Those live in four different systems today, which is why none of these questions can
+    currently be asked.</p>
+    <p style="margin:10px 0 0">See <b>Platform</b> for what that costs, and why it is one
+    portal rather than five tools.</p>
+  </div>
+</section>
+
+<section class="lens" id="l-ops">
+  <div class="kpis" id="kpis"></div>
+  <div class="panel"><div class="ph"><span class="eyebrow">Telemetry</span>
+    <h2>Where the minutes go</h2>
+    <p>Analyst effort against auto-segmentation confidence. Effort is well predicted by
+    confidence; diagnostic impact is only loosely related to either.</p></div>
+    <div class="pb">
+      <canvas id="vizConfidence" height="260"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--accent-2)"></i>Median minutes</span>
+        <span><i style="background:var(--crit)"></i>Actionable-correction rate</span>
+      </div>
+      <div class="statrow" id="telStats"></div>
+    </div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Operations</span>
+    <h2>Automation frontier</h2>
+    <p>Case strata ordered by residual risk, with the volume automatable at a given
+    tolerance. Drag to set the risk you are willing to carry.</p></div>
+    <div class="pb">
+      <div class="ctl"><label class="eyebrow" for="tol">Tolerance</label>
+        <input type="range" id="tol" min="0" max="16" step="0.25" value="8">
+        <span class="mono" id="tolOut"></span></div>
+      <div class="verdict" id="verdict">&hellip;</div>
+      <canvas id="vizFrontier" height="270"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--accent-2)"></i>Cumulative volume</span>
+        <span><i style="background:var(--crit)"></i>Stratum risk</span>
+        <span><i style="background:var(--accent)"></i>Chosen tolerance</span>
+      </div>
+      <div class="tw" style="margin-top:18px"><table id="strata"><thead><tr>
+        <th>Stratum</th><th class="n">Cases</th><th class="n">Actionable</th>
+        <th style="width:110px">Rate</th><th class="n">Med. min</th><th>Disposition</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Business process &middot; policy decision</span>
+    <h2>Shadow simulation: replay history under a policy</h2>
+    <p>The program lead's actual question: adopt policy P and <b>name the patients
+    whose answer changes</b>. Two dials: the strata tolerance, and a guard band
+    routing anything within &plusmn;g of the 0.80 threshold to a human regardless
+    of stratum.</p></div>
+    <div class="pb">
+      <div class="ctl">
+        <label class="eyebrow" for="shTol">Strata tolerance</label>
+        <input type="range" id="shTol" min="0.02" max="0.16" step="0.005" value="0.08"
+               aria-label="strata residual-risk tolerance" style="flex:0 1 180px">
+        <span class="mono" id="shTolOut"></span>
+        <label class="eyebrow" for="shGuard">Guard band &plusmn;</label>
+        <input type="range" id="shGuard" min="0" max="0.08" step="0.005" value="0.03"
+               aria-label="guard band around the 0.80 threshold" style="flex:0 1 180px">
+        <span class="mono" id="shGuardOut"></span>
+        <input id="shRole" value="program lead" aria-label="signing role"
+               style="width:120px;font:12px 'IBM Plex Sans',sans-serif;padding:5px 8px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+        <button class="btn" id="shSign">Freeze policy as evidence pack</button>
+        <span id="shSignOut" class="mono" style="font-size:12px"></span>
+      </div>
+      <div class="statrow" id="shStats"></div>
+      <div class="g2" style="margin-top:16px">
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Guard-band tradeoff (computed, not asserted)</div>
+          <div class="tw"><table id="shCurve"><thead><tr>
+            <th class="n">&plusmn;g</th><th class="n">Auto</th><th class="n">Hours back</th>
+            <th class="n">Changed answers</th><th class="n">Would-be FN</th>
+          </tr></thead><tbody></tbody></table></div>
+        </div>
+        <div>
+          <div class="eyebrow" style="margin-bottom:8px">Harm ledger at this policy &mdash; the named cases</div>
+          <div class="tw" style="max-height:240px;overflow-y:auto"><table id="shLedger"><thead><tr>
+            <th>Case</th><th>Direction</th><th class="n">pre &rarr; post</th><th class="n">dist</th>
+          </tr></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+      <div class="finding" id="shFraming" style="background:var(--info-bg);border-color:var(--accent-2)"></div>
+    </div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Telemetry</span>
+    <h2>Correction by coronary segment</h2>
+    <p>Which vessels absorb the effort.</p></div>
+    <div class="pb"><div class="tw"><table id="segs"><thead><tr>
+      <th>Segment</th><th class="n">Corrections</th><th class="n">Actionable</th>
+      <th style="width:120px">Rate</th><th class="n">Med. min</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div id="segNote"></div></div></div>
+</section>
+
+<section class="lens" id="l-quality">
+  <div class="panel"><div class="ph"><span class="eyebrow">Business process &middot; 21 CFR 820.198 / 803</span>
+    <h2>Complaint investigations</h2>
+    <p>received &rarr; under investigation &rarr; reportability decided (30-day clock)
+    &rarr; closed with a sealed record. The software enforces the gates: no decision
+    without a substantive rationale, no closing without a decision, and a decision
+    after the deadline is recorded as LATE forever.</p></div>
+    <div class="pb">
+      <div class="statrow" id="invStats"></div>
+      <div class="ctl" style="margin-top:14px">
+        <label class="eyebrow" for="invActor">Investigator</label>
+        <input id="invActor" type="text" value="andrii" style="width:130px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+        <span class="mono" id="invToday" style="font-size:12px;color:var(--ink-3)"></span>
+      </div>
+      <div class="ctl" id="invFilters" style="margin:10px 0 6px" role="group" aria-label="board filters"></div>
+      <div class="tw" style="max-height:300px;overflow-y:auto"><table id="invBoard"><thead><tr>
+        <th>Complaint</th><th>Type</th><th>Process state</th><th class="n">Clock</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+      <div id="invDrawer" style="display:none;border-top:2px solid var(--accent);margin-top:16px;padding-top:14px"></div>
+    </div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Quality</span>
+    <h2>Risk file, matched to live cases</h2>
+    <p>Each hazard carries a machine-evaluable signature. Residual risk stops being an
+    assertion in a document and becomes a number with a trend.</p></div>
+    <div class="pb"><div class="tw"><table id="haz"><thead><tr>
+      <th>ID</th><th>Hazard</th><th class="n">Matches</th><th class="n">Rate</th><th class="n">Complaints</th>
+    </tr></thead><tbody></tbody></table></div></div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Quality &middot; subgroups</span>
+    <h2>Performance disparity</h2>
+    <p id="dispPolicy">&hellip;</p></div>
+    <div class="pb"><div class="tw"><table id="disp"><thead><tr>
+      <th>Axis</th><th>Arm</th><th class="n">Cases</th><th style="width:100px">Rate</th>
+      <th class="n">95% CI</th><th class="n">vs best</th><th>Status</th>
+    </tr></thead><tbody></tbody></table></div></div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Quality &middot; cross-reference</span>
+    <h2>Complaint traversal</h2>
+    <p>Pick a complaint. The spine resolves it to its case, site, hazard, stratum and the
+    trend across releases &mdash; turning an anecdote into a signal, or ruling it out. Today
+    that traversal spans four systems and about a week.</p></div>
+    <div class="pb g2">
+      <div><div id="compFilter" style="margin-bottom:8px"></div>
+      <div class="tw" style="max-height:340px;overflow-y:auto"><table id="comp"><thead><tr>
+        <th>ID</th><th>Type</th><th class="n">Day</th><th>MDR</th></tr></thead><tbody></tbody></table></div></div>
+      <div class="trace" id="trace"></div>
+    </div></div>
+</section>
+
+<section class="lens" id="l-eng">
+  <div class="panel"><div class="ph"><span class="eyebrow">Engineering</span>
+    <h2>Release &times; scanner make</h2>
+    <p>Flagged only when the effect is both material and statistically supported, and
+    computed on the case-mix-standardised rate rather than the crude one. Ratio alone
+    produces false alarms on small cells, and a monitor that cries wolf gets muted.</p></div>
+    <div class="pb"><div class="tw"><table id="rel"><thead><tr>
+      <th>Model</th><th>Make</th><th class="n">Cases</th><th style="width:100px">Crude</th>
+      <th class="n">Std.</th><th class="n">Lift</th><th class="n">p</th><th>Signal</th>
+    </tr></thead><tbody></tbody></table></div></div></div>
+</section>
+
+<section class="lens" id="l-field">
+  <div class="panel" id="siteCardPanel" style="display:none">
+    <div class="ph"><span class="eyebrow">Site card &middot; every lens at once</span>
+      <h2 id="scName">&hellip;</h2>
+      <p>Conformance, hazard realisations, release exposure and complaints for one
+      site &mdash; four systems today, one card here.</p></div>
+    <div class="pb">
+      <div class="statrow" id="scStats"></div>
+      <div class="g2" style="margin-top:16px">
+        <div><div class="eyebrow" style="margin-bottom:8px">Hazards realised here</div>
+          <div id="scHaz"></div>
+          <div class="eyebrow" style="margin:14px 0 8px">By release</div>
+          <div class="tw"><table id="scRel"><thead><tr><th>Model</th>
+            <th class="n">Cases</th><th class="n">Actionable</th></tr></thead>
+            <tbody></tbody></table></div></div>
+        <div><div class="eyebrow" style="margin-bottom:8px">Complaints from this site</div>
+          <div id="scComp"></div></div>
+      </div>
+    </div></div>
+  <div class="panel"><div class="ph"><span class="eyebrow">Field service</span>
+    <h2>Attributable rejection</h2>
+    <p id="confNote">&hellip;</p></div>
+    <div class="pb"><div class="tw"><table id="conf"><thead><tr>
+      <th>Site</th><th class="n">Cases</th><th class="n">Observed</th><th class="n">Expected</th>
+      <th style="width:100px">Excess</th><th class="n">Med. HR</th><th class="n">Recoverable</th>
+    </tr></thead><tbody></tbody></table></div></div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Field service</span>
+    <h2>Site worklist</h2>
+    <p>Heart rate and nitroglycerin are the two things the 2026 SCCT/SCAI consensus requires,
+    and both are site-controlled.</p></div>
+    <div class="pb"><div class="tw"><table id="sites"><thead><tr>
+      <th>Site</th><th>Scanner</th><th class="n">Cases</th><th style="width:96px">Reject</th>
+      <th class="n">Med. HR</th><th class="n">Nitro</th><th>Visit effect</th>
+    </tr></thead><tbody></tbody></table></div></div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Field service &middot; silent failure</span>
+    <h2>Detector transitions</h2></div>
+    <div class="pb" id="det"></div></div>
+</section>
+
+<section class="lens" id="l-evidence">
+  <div class="panel"><div class="ph"><span class="eyebrow">Regulatory</span>
+    <h2>Reproducible evidence pack</h2>
+    <p>A number in a dashboard is not evidence. This carries the claim, the exact population,
+    the method, the code version, a warehouse fingerprint, the stated limitations, and a
+    manifest hash. The same warehouse state produces the same hash.</p></div>
+    <div class="pb">
+      <div class="ctl">
+        <label class="eyebrow" for="claimSel">Claim</label>
+        <select id="claimSel">
+          <option value="frontier">automation_frontier</option>
+          <option value="disparity">subgroup_disparity</option>
+        </select>
+        <button class="btn" id="verifyBtn">Fetch twice and compare hashes</button>
+      </div>
+      <div class="trace" id="packTrace"></div>
+      <div style="border-top:1px solid var(--rule);margin-top:18px;padding-top:16px">
+        <div class="eyebrow" style="margin-bottom:10px">Freeze &amp; sign this pack</div>
+        <div class="ctl">
+          <input id="signActor" placeholder="name" style="width:130px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+          <input id="signRole" placeholder="role" style="width:150px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+          <input id="signNote" placeholder="note (optional)" style="flex:1 1 160px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+          <button class="btn" id="signBtn">Verify &amp; sign</button>
+        </div>
+        <div id="signOut"></div>
+        <div class="eyebrow" style="margin:16px 0 8px">Signed packs (re-verified on every read)</div>
+        <div class="tw"><table id="signedTbl"><thead><tr>
+          <th>Claim</th><th>Manifest</th><th>Signed by</th><th class="n">When</th><th>Verification</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+    </div></div>
+</section>
+
+<section class="lens" id="l-actions">
+  <div class="note"><span class="eyebrow">The write path, and its boundary</span>
+    <p>Findings become owned work here: a five-state lifecycle, a mandatory actor and
+    note on every transition, and an append-only audit trail. Writes go to a
+    <b>separate store</b> &mdash; the spine stays read-only, and no write route touches
+    a case. Dispositioning a <i>case</i> remains forbidden; dispositioning a
+    <i>finding</i> is QMS workflow.</p></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Inbox</span>
+    <h2>Findings requiring action</h2>
+    <p>Synced from the current warehouse &mdash; idempotent, and never resurrects an
+    item a person already moved.</p></div>
+    <div class="pb">
+      <div class="ctl">
+        <label class="eyebrow" for="actorIn">Acting as</label>
+        <input id="actorIn" type="text" value="andrii" style="width:140px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+        <button class="btn" id="syncBtn">Sync findings</button>
+        <span class="mono" id="syncOut" style="font-size:12px;color:var(--ink-3)"></span>
+        <a class="btn" href="/api/briefing?download=true" style="margin-left:auto;text-decoration:none">Export briefing</a>
+      </div>
+      <div id="actionList"></div>
+    </div></div>
+</section>
+
+<section class="lens" id="l-platform">
+  <div class="note">
+    <span class="eyebrow">Why one portal, not five tools</span>
+    <p>Deployment is the cheap part. The expensive parts are <b>integration</b> &mdash; access
+    to each source system, security review, data agreements, the PHI boundary &mdash; and
+    <b>learning</b> &mdash; people changing how they work, and trusting a number enough to act
+    on it.</p>
+    <p style="margin:10px 0 0">Integration cost is paid <b>once per source system</b>.
+    Learning cost is paid <b>once per tool</b>. So the economics say: pay the integration
+    once, then add features as lenses rather than as products. Five separate tools would mean
+    five security reviews, five logins, five training sessions, and five teams each quoting a
+    slightly different version of the same metric.</p>
+  </div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Architecture</span>
+    <h2>Shared foundation, many lenses</h2>
+    <p>Every feature below reads the same conformed grain. The dashed links join features
+    owned by <em>different departments</em> &mdash; and are the reason this cannot be five
+    separate tools.</p></div>
+    <div class="pb" style="overflow-x:auto">
+      <svg id="platformMap" viewBox="0 0 940 480" role="img"
+           aria-label="Seven source systems feed one case spine; nine features read from it as lenses, with cross-department links between features."
+           style="min-width:820px;width:100%;height:auto"></svg>
+    </div></div>
+
+  <div class="panel"><div class="ph"><span class="eyebrow">Cost model</span>
+    <h2>What each additional feature costs</h2>
+    <p>Illustrative &mdash; the ratios are the point, not the absolute numbers.</p></div>
+    <div class="pb"><div class="tw"><table id="costTbl"><thead><tr>
+      <th>Cost</th><th>Paid per</th><th class="n">First feature</th>
+      <th class="n">Further feature<br>as a lens</th><th class="n">Further feature<br>as its own tool</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="finding" style="background:var(--info-bg);border-color:var(--accent-2)">
+      <b>The asymmetry is the whole argument.</b> A lens inherits the integration, the auth,
+      the audit trail, the metric definitions and the user's existing mental model. A separate
+      tool re-pays all of it, and adds a new place for the numbers to disagree.</div>
+    </div></div>
+</section>
+
+<footer>
+  Synthetic corpus. <span class="mono">GET /docs</span> for the OpenAPI schema.
+  Read-only by construction: nothing here routes, prioritises or dispositions a case.
+</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct=(v,d=1)=>v==null?'—':(v*100).toFixed(d)+'%';
+const num=v=>v==null?'—':Math.round(v).toLocaleString();
+// AbortSignal.timeout: a hung backend request must surface as a visible error
+// (data-ready="error"), never as a page that silently loads forever.
+const get=async p=>{const r=await fetch(p,{signal:AbortSignal.timeout(20000)});if(!r.ok)throw new Error(p+' -> '+r.status);return r.json()};
+
+function fit(cv,h){
+  const w=cv.clientWidth||820,dpr=devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  x.font='11px "IBM Plex Mono", monospace';
+  return[x,w,h];
+}
+function grid(x,L,T,pw,ph,rows,fmt){
+  x.strokeStyle=css('--rule');x.lineWidth=1;
+  for(let i=0;i<=rows;i++){
+    const y=T+ph*i/rows;
+    x.beginPath();x.moveTo(L,y);x.lineTo(L+pw,y);x.stroke();
+    x.fillStyle=css('--ink-3');x.textAlign='right';x.fillText(fmt(1-i/rows),L-9,y+4);
+  }
+}
+
+const LENSES=[['findings','Findings'],['ops','Operations'],['quality','Quality'],
+              ['eng','Engineering'],['field','Field'],['evidence','Evidence'],
+              ['actions','Actions'],['platform','Platform']];
+$('nav').innerHTML=LENSES.map(([k,t],i)=>
+  `<button data-k="${k}" aria-selected="${!i}">${t}</button>`).join('');
+function openLens(k,updateHash=true){
+  const b=document.querySelector('#nav button[data-k="'+k+'"]');if(!b)return;
+  document.querySelectorAll('#nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('.lens').forEach(s=>s.classList.toggle('on',s.id==='l-'+k));
+  if(updateHash&&location.hash!=='#lens='+k)history.replaceState(null,'','#lens='+k);
+  redraw();
+}
+$('nav').onclick=e=>{const b=e.target.closest('button');if(b)openLens(b.dataset.k);};
+
+function applyHash(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  const lens=h.get('lens');
+  if(h.get('investigation')!=null){openLens('quality',false);
+    (async()=>{if(!INV_CACHE)await loadInvestigations();
+      showInvestigation(+h.get('investigation'));})();return;}
+  if(h.get('complaint')!=null){openLens('quality',false);trace(h.get('complaint'));return;}
+  if(h.get('site')!=null){showSite(+h.get('site'));return;}
+  if(h.get('hazard')){openLens('quality',false);loadComplaints({hazard_id:h.get('hazard')});return;}
+  if(h.get('release')){openLens('quality',false);loadComplaints({model_version:h.get('release')});return;}
+  if(lens)openLens(lens,false);
+}
+addEventListener('hashchange',applyHash);
+
+let TEL,HIST,REL,DET,DISP,STRATA=[];
+
+async function loadCore(){
+  [TEL,HIST,REL,DET,DISP]=await Promise.all([
+    get('/api/ops/telemetry'),get('/api/ops/delta-histogram'),
+    get('/api/engineering/releases'),get('/api/field/detector-timeseries'),
+    get('/api/quality/disparity')]);
+  const o=await get('/api/overview');
+  const e=TEL.effort,w=TEL.confirmation_cost,share=w.hours/e.total_hours;
+  $('heroBig').textContent=pct(share,0);
+  $('heroCap').innerHTML=`of all analyst time went to cases where the human
+    <b>confirmed the machine rather than correcting it</b> &mdash; ${num(w.cases)} cases,
+    ${num(w.hours)} hours.`;
+  $('heroSub').textContent='That is not waste. It is the cost of a safety control nobody '+
+    'has measured. Removing it is the margin plan; knowing which cases can safely lose it '+
+    'is the prerequisite.';
+  $('heroStats').innerHTML=[
+    [num(o.accepted_cases),'cases analysed'],
+    [num(e.total_hours)+' h','analyst time'],
+    [e.median_min.toFixed(0)+' min','median per case'],
+    [pct(o.actionable_correction_rate,1),'changed the answer'],
+    [pct(o.reject_rate,1),'rejected before analysis'],
+  ].map(([v,k])=>`<div><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
+}
+
+function drawEffort(){
+  if(!TEL)return;
+  const [x,w,h]=fit($('vizEffort'),300);
+  const L=56,R=16,T=20,B=48,pw=w-L-R,ph=h-T-B,d=TEL.by_minutes;
+  const mx=Math.max(...d.map(b=>b.hours))*1.1;
+  grid(x,L,T,pw,ph,4,f=>Math.round(mx*f)+'h');
+  const bw=pw/d.length;
+  d.forEach((b,i)=>{
+    const bx=L+i*bw,act=b.hours*b.actionable_rate,con=b.hours-act;
+    const hc=ph*con/mx,ha=ph*act/mx;
+    x.globalAlpha=.85;x.fillStyle=css('--flow-hi');x.fillRect(bx+3,T+ph-hc,bw-6,hc);
+    x.globalAlpha=1;x.fillStyle=css('--flow-lo');x.fillRect(bx+3,T+ph-hc-ha,bw-6,ha);
+    x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(b.min_bucket,bx+bw/2,h-28);
+    x.fillStyle=css('--crit');x.fillText(pct(b.actionable_rate,0),bx+bw/2,h-13);
+  });
+  x.fillStyle=css('--ink-3');x.textAlign='center';
+  x.fillText('analyst minutes per case  ->    red % = share that changed the answer',L+pw/2,T-6);
+  const f=d[0],l=d[d.length-1];
+  $('footEffort').innerHTML=`Effort predicts impact: cases under 10 minutes changed the answer
+    <b>${pct(f.actionable_rate,1)}</b> of the time; cases over an hour,
+    <b>${pct(l.actionable_rate,1)}</b>. That is the good news &mdash; difficulty is visible
+    <i>before</i> a human touches the case, which is what makes a stratified automation
+    argument possible at all.
+    <a href="#lens=ops" style="color:var(--accent-2);font-weight:600">Frontier &rarr;</a>`;
+}
+
+function drawDelta(){
+  if(!HIST)return;
+  const [x,w,h]=fit($('vizDelta'),270);
+  const L=56,R=16,T=14,B=42,pw=w-L-R,ph=h-T-B;
+  const mx=Math.max(...HIST.map(b=>b.unchanged+b.crossed))*1.05;
+  grid(x,L,T,pw,ph,4,f=>num(mx*f));
+  const bw=pw/HIST.length;
+  HIST.forEach((b,i)=>{
+    const bx=L+i*bw,hu=ph*b.unchanged/mx,hc=ph*b.crossed/mx;
+    x.globalAlpha=.8;x.fillStyle=css('--flow-hi');x.fillRect(bx+1,T+ph-hu,bw-2,hu);
+    x.globalAlpha=1;x.fillStyle=css('--flow-lo');x.fillRect(bx+1,T+ph-hu-hc,bw-2,hc);
+  });
+  x.fillStyle=css('--ink-3');x.textAlign='center';
+  for(let i=0;i<=4;i++)x.fillText((0.13*i/4).toFixed(3),L+pw*i/4,h-24);
+  x.fillText('|delta FFR| produced by the correction  ->',L+pw/2,h-8);
+  const tot=HIST.reduce((a,b)=>a+b.unchanged+b.crossed,0),f=HIST[0];
+  $('footDelta').innerHTML=`<b>${pct((f.unchanged+f.crossed)/tot,0)}</b> of corrections moved
+    the value by less than 0.005 &mdash; below the reproducibility of invasive FFR itself.
+    The question is not whether analysts are careful. It is whether this particular care is
+    buying a different answer.`;
+}
+
+function drawRelease(){
+  if(!REL)return;
+  const [x,w,h]=fit($('vizRelease'),290);
+  const L=56,R=112,T=18,B=40,pw=w-L-R,ph=h-T-B;
+  const makes=[...new Set(REL.map(r=>r.scanner_make))];
+  const vers=[...new Set(REL.map(r=>r.model_version))].sort();
+  const val=r=>r.standardised_rate??r.actionable_correction_rate;
+  const mx=Math.max(...REL.map(val))*1.18;
+  grid(x,L,T,pw,ph,4,f=>pct(mx*f,0));
+  const tokens=['--flow-lo','--accent-2','--ok','--warn'];
+  const colOf={};makes.forEach((m,i)=>colOf[m]=tokens[i%tokens.length]);
+  const xf=i=>L+(vers.length===1?pw/2:pw*i/(vers.length-1));
+  vers.forEach((v,i)=>{x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(v,xf(i),h-20)});
+
+  makes.forEach(m=>{
+    const pts=vers.map((v,i)=>{
+      const r=REL.find(z=>z.scanner_make===m&&z.model_version===v);
+      return r?{x:xf(i),y:T+ph-ph*val(r)/mx,r}:null;}).filter(Boolean);
+    if(pts.length<2)return;
+    const col=css(colOf[m]),hot=pts.some(p=>p.r.signal==='regression');
+    x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));
+    x.strokeStyle=col;x.lineWidth=hot?3.2:1.6;x.globalAlpha=hot?1:.45;x.stroke();x.globalAlpha=1;
+    pts.forEach(p=>{
+      const big=p.r.signal==='regression';
+      x.beginPath();x.arc(p.x,p.y,big?6:3.4,0,7);x.fillStyle=col;x.fill();
+      if(big){x.beginPath();x.arc(p.x,p.y,11,0,7);x.strokeStyle=col;x.lineWidth=1.4;x.stroke();}
+    });
+    const last=pts[pts.length-1];
+    x.fillStyle=col;x.textAlign='left';x.font='600 11.5px "IBM Plex Sans", sans-serif';
+    x.fillText(m,L+pw+10,last.y+4);x.font='11px "IBM Plex Mono", monospace';
+  });
+  const reg=REL.find(r=>r.signal==='regression');
+  $('footRelease').innerHTML=reg
+    ?`<b>${reg.model_version} on ${reg.scanner_make}</b> pushed the rate to
+      <b>${pct(val(reg),2)}</b> &mdash; a ${reg.lift_vs_first_release.toFixed(2)}x lift,
+      p&nbsp;=&nbsp;${reg.p_value.toFixed(4)} &mdash; while every other manufacturer stayed
+      flat. Median analyst minutes barely moved, so nothing in a throughput view would have
+      surfaced it. <a href="#release=${reg.model_version}" style="color:var(--accent-2);font-weight:600">See its complaints &rarr;</a>`
+    :'No confirmed regression in this window.';
+  $('legRelease').innerHTML=makes.map(m=>
+    `<span><i style="background:${css(colOf[m])}"></i>${m}</span>`).join('');
+}
+
+function drawDetector(){
+  if(!DET||!DET.migrated.length)return;
+  const [x,w,h]=fit($('vizDetector'),300);
+  const L=62,R=18,T=22,B=42,pw=w-L-R,ph=h-T-B;
+  const all=[...DET.migrated.flatMap(s=>s.series),...((DET.control&&DET.control.series)||[])];
+  if(!all.length)return;
+  const mx=Math.max(...all.map(p=>p.median_tpv))*1.12;
+  const days=Math.max(...all.map(p=>p.day_bucket))||1;
+  grid(x,L,T,pw,ph,4,f=>num(mx*f));
+  const xf=d=>L+pw*d/days,yf=v=>T+ph-ph*v/mx;
+
+  if(DET.control&&DET.control.series&&DET.control.series.length){
+    x.beginPath();DET.control.series.forEach((p,i)=>{const px=xf(p.day_bucket),py=yf(p.median_tpv);i?x.lineTo(px,py):x.moveTo(px,py)});
+    x.strokeStyle=css('--ink-3');x.lineWidth=1.4;x.globalAlpha=.55;x.setLineDash([4,3]);x.stroke();
+    x.setLineDash([]);x.globalAlpha=1;
+  }
+  DET.migrated.forEach(s=>{
+    const sw=s.detector_switch_day;
+    x.beginPath();x.moveTo(xf(sw),T);x.lineTo(xf(sw),T+ph);
+    x.strokeStyle=css('--accent');x.lineWidth=1.5;x.setLineDash([3,3]);x.stroke();x.setLineDash([]);
+    x.fillStyle=css('--accent');x.textAlign='center';x.fillText('detector swap',xf(sw),T-7);
+    [['EID','--flow-hi'],['PCD','--flow-lo']].forEach(([det,tok])=>{
+      const seg=s.series.filter(p=>det==='EID'?p.day_bucket<sw:p.day_bucket>=sw);
+      if(seg.length<2)return;
+      x.beginPath();seg.forEach((p,i)=>{const px=xf(p.day_bucket),py=yf(p.median_tpv);i?x.lineTo(px,py):x.moveTo(px,py)});
+      x.strokeStyle=css(tok);x.lineWidth=2.4;x.stroke();
+      seg.forEach(p=>{x.beginPath();x.arc(xf(p.day_bucket),yf(p.median_tpv),2.6,0,7);x.fillStyle=css(tok);x.fill()});
+    });
+  });
+  x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText('day  ->',L+pw/2,h-8);
+  x.save();x.translate(16,T+ph/2);x.rotate(-Math.PI/2);x.textAlign='center';
+  x.fillText('median total plaque volume (mm3)',0,0);x.restore();
+  $('footDetector').innerHTML=`Any nomogram percentile derived from energy-integrating data now
+    misclassifies every patient at these sites. The dashed control site shows what no step
+    looks like. <b>Detectable only because detector generation is resolved at scan time on the
+    case row</b> &mdash; carry the site's current detector instead and the history silently
+    rewrites itself. <a href="#site=${DET.migrated[0].site_id}" style="color:var(--accent-2);font-weight:600">Open the site card &rarr;</a>`;
+}
+
+function drawDisparity(){
+  if(!DISP)return;
+  const [x,w,h]=fit($('vizDisparity'),330);
+  const L=168,R=26,T=16,B=40,pw=w-L-R,ph=h-T-B;
+  const arms=DISP.findings.flatMap(f=>f.arms.map(a=>({...a,axis:f.axis})));
+  if(!arms.length)return;
+  const mx=Math.max(...arms.map(a=>a.ci_high))*1.05,rowH=ph/arms.length;
+  x.strokeStyle=css('--rule');
+  for(let i=0;i<=4;i++){const px=L+pw*i/4;
+    x.beginPath();x.moveTo(px,T);x.lineTo(px,T+ph);x.stroke();
+    x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(pct(mx*i/4,0),px,h-22)}
+  arms.forEach((a,i)=>{
+    const y=T+rowH*(i+.5);
+    const col=a.escalate?css('--crit'):a.fdr_significant?css('--warn'):css('--ink-3');
+    x.strokeStyle=col;x.lineWidth=1.7;x.globalAlpha=.75;
+    x.beginPath();x.moveTo(L+pw*a.ci_low/mx,y);x.lineTo(L+pw*a.ci_high/mx,y);x.stroke();x.globalAlpha=1;
+    x.beginPath();x.arc(L+pw*a.rate/mx,y,a.escalate?5:3.4,0,7);x.fillStyle=col;x.fill();
+    x.font='10.5px "IBM Plex Mono", monospace';
+    x.fillStyle=css('--ink-2');x.textAlign='right';x.fillText(String(a.level).slice(0,18),L-10,y+3.5);
+    x.fillStyle=css('--ink-3');x.textAlign='left';
+    x.fillText(a.axis.replace('_band','').replace('_at_scan','').slice(0,13),6,y+3.5);
+  });
+  x.fillStyle=css('--ink-3');x.textAlign='center';
+  x.fillText('actionable-correction rate  ->',L+pw/2,h-8);
+  const esc=DISP.escalations.length,sig=arms.filter(a=>a.fdr_significant&&!a.escalate).length;
+  $('footDisparity').innerHTML=`<b>${esc}</b> arm(s) escalated. <b>${sig}</b> more are
+    statistically significant but fall below the ${DISP.policy.min_disparity_ratio}x effect
+    floor and are deliberately <i>not</i> escalated &mdash; on this many cases a small gap is
+    easy to detect and not worth acting on. Escalation requires significance <i>and</i> effect
+    size <i>and</i> a minimum arm size, all three.
+    <a href="#lens=quality" style="color:var(--accent-2);font-weight:600">Full table &rarr;</a>`;
+}
+
+async function operations(){
+  const o=await get('/api/overview');
+  $('kpis').innerHTML=[
+    [pct(o.actionable_correction_rate),'Actionable correction rate',1],
+    [num(o.accepted_cases),'Accepted cases'],[pct(o.reject_rate),'Reject rate'],
+    [o.median_analyst_min.toFixed(0)+' min','Median analyst time'],
+    [num(o.complaints),'Complaints'],[num(o.hazard_matches),'Hazard matches'],
+  ].map(([v,k,hi])=>`<div class="kpi ${hi?'hi':''}"><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
+  const e=TEL.effort;
+  $('telStats').innerHTML=[
+    [e.median_active.toFixed(0)+' / '+e.median_idle.toFixed(0),'median active / idle min'],
+    [e.p90_min.toFixed(0)+' min','p90'],[e.p99_min.toFixed(0)+' min','p99'],
+    [e.median_edits.toFixed(0),'median edits per case'],
+    [num(e.total_hours)+' h','total analyst time'],
+  ].map(([v,k])=>`<div><span class="v">${v}</span><span class="k">${k}</span></div>`).join('');
+
+  const segs=await get('/api/ops/segments');
+  const mxc=Math.max(...segs.map(s=>s.corrections));
+  $('segs').tBodies[0].innerHTML=segs.map(s=>`<tr>
+    <td class="mono">${s.segment}</td><td class="n">${num(s.corrections)}</td>
+    <td class="n">${num(s.actionable)}</td>
+    <td><span class="bar"><i style="width:${(s.corrections/mxc*100).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(s.actionable_rate,2)}</span></td>
+    <td class="n">${s.median_min.toFixed(0)}</td></tr>`).join('');
+  const rates=segs.map(s=>s.actionable_rate),spread=Math.max(...rates)/Math.min(...rates);
+  $('segNote').innerHTML=spread<1.3
+    ?`<div class="finding" style="background:var(--warn-bg);border-color:var(--warn)">
+      <b>This view does not currently discriminate.</b> Actionable rate is
+      ${pct(Math.min(...rates),1)}&ndash;${pct(Math.max(...rates),1)} across every segment
+      (${spread.toFixed(2)}x spread), so segment identity is not predicting impact here.
+      Reported rather than hidden: a lens that cannot separate anything should say so.</div>`
+    :'';
+}
+
+function drawConfidence(){
+  if(!TEL||!TEL.by_confidence.length)return;
+  const [x,w,h]=fit($('vizConfidence'),260);
+  const L=54,R=54,T=14,B=40,pw=w-L-R,ph=h-T-B,d=TEL.by_confidence;
+  const mxm=Math.max(...d.map(p=>p.median_min))*1.12;
+  const mxr=Math.max(...d.map(p=>p.actionable_rate))*1.18;
+  grid(x,L,T,pw,ph,4,f=>Math.round(mxm*f)+'m');
+  const xf=i=>L+(d.length===1?pw/2:pw*i/(d.length-1));
+  x.beginPath();d.forEach((p,i)=>{const y=T+ph-ph*p.median_min/mxm;i?x.lineTo(xf(i),y):x.moveTo(xf(i),y)});
+  x.strokeStyle=css('--accent-2');x.lineWidth=2.6;x.stroke();
+  x.beginPath();d.forEach((p,i)=>{const y=T+ph-ph*p.actionable_rate/mxr;i?x.lineTo(xf(i),y):x.moveTo(xf(i),y)});
+  x.strokeStyle=css('--crit');x.lineWidth=2.6;x.setLineDash([5,3]);x.stroke();x.setLineDash([]);
+  d.forEach((p,i)=>{x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(p.confidence.toFixed(1),xf(i),h-22)});
+  x.textAlign='left';x.fillStyle=css('--crit');
+  for(let i=0;i<=4;i++)x.fillText(pct(mxr*(1-i/4),0),L+pw+8,T+ph*i/4+4);
+  x.fillStyle=css('--ink-3');x.textAlign='center';
+  x.fillText('auto-segmentation confidence  ->',L+pw/2,h-8);
+}
+
+async function frontier(){
+  const tol=+$('tol').value/100;
+  $('tolOut').textContent='<= '+(tol*100).toFixed(2)+'%';
+  const d=await get('/api/ops/frontier?tolerance='+tol);
+  STRATA=d.strata;const a=d.at_tolerance;
+  $('verdict').innerHTML=`At <b>&le;${pct(tol,2)}</b> residual risk, <b>${a.eligible_strata}</b>
+    of ${a.total_strata} strata qualify &mdash; <b>${pct(a.volume_share,0)}</b> of accepted
+    volume (${num(a.cases)} cases) at a blended residual rate of
+    <b>${pct(a.residual_rate,2)}</b>.`;
+  const mx=Math.max(...STRATA.map(s=>s.actionable_correction_rate),.01);
+  $('strata').tBodies[0].innerHTML=STRATA.map(s=>{
+    const dd=s.actionable_correction_rate<=tol?['ok','Automate']
+      :s.actionable_correction_rate<=tol*1.7?['warn','Monitor']:['crit','Human required'];
+    return `<tr><td class="mono">${s.stratum}</td><td class="n">${s.accepted_cases}</td>
+      <td class="n">${s.actionable_corrections}</td>
+      <td><span class="bar"><i style="width:${(s.actionable_correction_rate/mx*100).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(s.actionable_correction_rate,2)}</span></td>
+      <td class="n">${s.median_analyst_min.toFixed(0)}</td>
+      <td><span class="tag ${dd[0]}">${dd[1]}</span></td></tr>`;}).join('');
+  drawFrontier(tol);
+}
+function drawFrontier(tol){
+  if(!STRATA.length)return;
+  const [x,w,h]=fit($('vizFrontier'),270);
+  const L=52,R=54,T=14,B=32,pw=w-L-R,ph=h-T-B;
+  const mr=Math.max(0.14,...STRATA.map(s=>s.actionable_correction_rate));
+  grid(x,L,T,pw,ph,5,f=>pct(f,0));
+  x.beginPath();x.moveTo(L,T+ph);
+  STRATA.forEach((s,i)=>x.lineTo(L+pw*(i+1)/STRATA.length,T+ph-ph*s.cumulative_share));
+  x.lineTo(L+pw,T+ph);x.closePath();x.fillStyle=css('--accent-2')+'22';x.fill();
+  x.beginPath();STRATA.forEach((s,i)=>{const px=L+pw*(i+1)/STRATA.length,py=T+ph-ph*s.cumulative_share;i?x.lineTo(px,py):x.moveTo(px,py)});
+  x.strokeStyle=css('--accent-2');x.lineWidth=2.6;x.stroke();
+  x.beginPath();STRATA.forEach((s,i)=>{const px=L+pw*(i+1)/STRATA.length,py=T+ph-ph*(s.actionable_correction_rate/mr);i?x.lineTo(px,py):x.moveTo(px,py)});
+  x.strokeStyle=css('--crit');x.lineWidth=1.7;x.setLineDash([4,3]);x.stroke();x.setLineDash([]);
+  const el=STRATA.filter(s=>s.actionable_correction_rate<=tol).length;
+  if(el){const px=L+pw*el/STRATA.length;
+    x.beginPath();x.moveTo(px,T);x.lineTo(px,T+ph);x.strokeStyle=css('--accent');x.lineWidth=2.6;x.stroke();
+    x.beginPath();x.arc(px,T+ph-ph*STRATA[el-1].cumulative_share,5,0,7);x.fillStyle=css('--accent');x.fill()}
+  x.fillStyle=css('--ink-3');x.textAlign='left';
+  for(let i=0;i<=5;i++)x.fillText(pct(mr*(1-i/5),1),L+pw+8,T+ph*i/5+4);
+}
+
+async function quality(){
+  const hz=await get('/api/quality/hazards');
+  $('haz').tBodies[0].innerHTML=hz.map(h=>`<tr class="clk" data-hazard="${h.hazard_id}"><td class="mono">${h.hazard_id}</td>
+    <td>${h.title}<div style="font-size:11px;color:var(--ink-3);margin-top:2px">controls: ${(h.controls||[]).join(' &middot; ')}</div></td>
+    <td class="n">${num(h.matches)}</td><td class="n">${pct(h.match_rate,2)}</td>
+    <td class="n">${h.complaints}</td></tr>`).join('');
+  const p=DISP.policy;
+  $('dispPolicy').innerHTML=`Escalation is conjunctive and predetermined: FDR-significant
+    (Benjamini-Hochberg q=${p.fdr_q}) <b>and</b> disparity &ge; ${p.min_disparity_ratio}x
+    <b>and</b> arm &ge; ${p.min_arm_n} cases. ${p.comparisons} comparisons. ${p.note}`;
+  $('disp').tBodies[0].innerHTML=DISP.findings.flatMap(f=>f.arms.map(a=>{
+    const t=a.escalate?['crit','escalate']:a.fdr_significant?['warn','significant only']:['info','-'];
+    return `<tr><td class="mono" style="font-size:11.5px">${f.axis}</td>
+      <td class="mono">${a.level}</td><td class="n">${num(a.n)}</td>
+      <td><span class="bar"><i style="width:${Math.min(100,a.rate*400).toFixed(0)}%"></i></span>
+        <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(a.rate,2)}</span></td>
+      <td class="n" style="font-size:11.5px">${pct(a.ci_low,1)}-${pct(a.ci_high,1)}</td>
+      <td class="n">${a.disparity_vs_best.toFixed(2)}x</td>
+      <td><span class="tag ${t[0]}">${t[1]}</span></td></tr>`;})).join('');
+  await loadComplaints();
+}
+
+async function loadComplaints(filter){
+  const qs=filter?'?'+new URLSearchParams(filter):'';
+  const cs=await get('/api/quality/complaints'+qs);
+  $('compFilter').innerHTML=filter
+    ?`<span class="tag warn">filtered: ${Object.entries(filter).map(([k,v])=>k.replace('_id','')+' = '+v).join(', ')}
+       &middot; ${cs.length} complaint(s)</span>
+      <button class="btn" id="clearComp" style="margin-left:8px;padding:2px 8px;font-size:10.5px">clear</button>`
+    :'';
+  const cb=$('clearComp');if(cb)cb.onclick=()=>loadComplaints();
+  $('comp').tBodies[0].innerHTML=cs.length?cs.map(c=>`<tr class="clk" data-id="${c.complaint_id}">
+    <td class="mono">C-${String(c.complaint_id).padStart(3,'0')}</td>
+    <td>${c.complaint_type.replace(/_/g,' ')}</td><td class="n">${c.complaint_day}</td>
+    <td>${c.mdr_reportable?'<span class="tag crit">MDR</span>':'<span class="tag info">no</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="4" style="color:var(--ink-3)">no complaints match this filter</td></tr>';
+  $('comp').onclick=e=>{const r=e.target.closest('tr');if(r&&r.dataset.id)trace(r.dataset.id)};
+  if(cs.length)trace((cs.find(c=>c.hazard_id==='H-014')||cs[0]).complaint_id);
+}
+async function trace(id){
+  document.querySelectorAll('#comp tr').forEach(r=>r.classList.toggle('sel',r.dataset.id==id));
+  const t=await get('/api/quality/complaints/'+id+'/trace');
+  const c=t.complaint,co=t.stratum_cohort;
+  const hop=(l,v)=>`<div class="hop"><div class="lbl">${l}</div><div>${v}</div></div>`;
+  const worst=t.by_release.reduce((a,b)=>b.actionable_correction_rate>((a&&a.actionable_correction_rate)??-1)?b:a,null);
+  $('trace').innerHTML=
+    hop('Complaint',`<span class="mono">C-${String(c.complaint_id).padStart(3,'0')}</span> &middot; ${c.complaint_type.replace(/_/g,' ')} &middot; day ${c.complaint_day} ${c.mdr_reportable?'<span class="tag crit">MDR</span>':''}`)+
+    hop('-> Case',`<span class="mono">case ${c.case_id}</span> &middot; FFR ${c.ffr_pre} -> ${c.ffr_post}`)+
+    hop('-> Site',`<a href="#site=${c.site_id}" style="color:var(--accent-2)">${c.site_name}</a><br><span class="mono" style="font-size:12px">${c.scanner_make} ${c.scanner_model} &middot; ${c.detector_at_scan}</span>`)+
+    hop('-> Hazard',c.hazard_id?`<span class="tag crit">${c.hazard_id}</span>`:'<em style="color:var(--ink-3)">unmatched</em>')+
+    hop('-> Stratum',`<span class="mono">${c.stratum}</span> &middot; ${co.accepted_cases} peers &middot; ${pct(co.actionable_correction_rate,2)}`)+
+    hop('-> By release',t.by_release.map(r=>`<span class="mono">${r.model_version}</span> ${pct(r.actionable_correction_rate,2)} <span style="color:var(--ink-3)">(n=${r.accepted_cases})</span>`).join('<br>'))+
+    `<div class="finding"><b>Not an anecdote.</b> This complaint sits in a stratum of
+      <b>${co.accepted_cases}</b> cases at <b>${pct(co.actionable_correction_rate,2)}</b>${worst?`, peaking at
+      <b>${pct(worst.actionable_correction_rate,2)}</b> under <b>${worst.model_version}</b>`:''}.
+      Today this traversal spans four systems.</div>`;
+}
+
+function engineering(){
+  const mx=Math.max(...REL.map(r=>r.actionable_correction_rate));
+  $('rel').tBodies[0].innerHTML=REL.map(r=>{
+    const cls={regression:'crit',improved:'ok',unconfirmed:'warn',stable:'info'}[r.signal];
+    return `<tr class="clk" data-release="${r.model_version}"><td class="mono">${r.model_version}</td><td>${r.scanner_make}</td>
+      <td class="n">${num(r.accepted_cases)}</td>
+      <td><span class="bar"><i style="width:${(r.actionable_correction_rate/mx*100).toFixed(0)}%"></i></span>
+        <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(r.actionable_correction_rate,2)}</span></td>
+      <td class="n">${pct(r.standardised_rate,2)}</td>
+      <td class="n">${r.lift_vs_first_release.toFixed(2)}</td>
+      <td class="n">${r.p_value<0.001?'&lt;0.001':r.p_value.toFixed(3)}</td>
+      <td><span class="tag ${cls}">${r.signal}</span></td></tr>`;}).join('');
+}
+
+async function field(){
+  const c=await get('/api/field/conformance'),n=c.network;
+  $('confNote').innerHTML=`Ranked by rejection <b>in excess of what case mix predicts</b>.
+    Case mix explains <b>${pct(n.case_mix_variance_explained,1)}</b> of between-site variance
+    &mdash; ${n.interpretation}.`;
+  $('conf').tBodies[0].innerHTML=c.sites.map(s=>`<tr class="clk" data-site="${s.site_id}">
+    <td>${s.site_name}<div style="font-size:10.5px;color:var(--ink-3)">${s.region} &middot; ${s.scanner_make}</div></td>
+    <td class="n">${s.cases}</td><td class="n">${pct(s.observed_reject_rate)}</td>
+    <td class="n">${pct(s.expected_reject_rate)}</td>
+    <td><span class="bar"><i style="width:${Math.min(100,Math.max(0,s.excess_reject_rate)*400).toFixed(0)}%"></i></span>
+      <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${s.excess_reject_rate>=0?'+':''}${pct(s.excess_reject_rate)}</span></td>
+    <td class="n">${s.median_heart_rate.toFixed(0)}</td>
+    <td class="n">${s.recoverable_cases.toFixed(1)}</td></tr>`).join('');
+
+  const sl=await get('/api/field/sites');
+  $('sites').tBodies[0].innerHTML=sl.map(x=>{
+    const eff=x.accept_before_visit==null?'<span style="color:var(--ink-3);font-size:12px">no visit</span>'
+      :`<span class="mono" style="font-size:11.5px">${pct(1-x.accept_before_visit)} -> ${pct(1-x.accept_after_visit)}</span>
+        <span class="tag ${x.accept_after_visit>x.accept_before_visit?'ok':'warn'}">${x.accept_after_visit>x.accept_before_visit?'improved':'flat'}</span>`;
+    return `<tr class="clk" data-site="${x.site_id}"><td>${x.site_name}<div style="font-size:10.5px;color:var(--ink-3)">${x.region} &middot; ${x.site_class}</div></td>
+      <td style="font-size:12px">${x.scanner_make}<div style="font-size:10.5px;color:var(--ink-3)">${x.scanner_model}</div></td>
+      <td class="n">${x.cases}</td>
+      <td><span class="bar"><i style="width:${Math.min(100,x.reject_rate*400).toFixed(0)}%"></i></span>
+        <span class="mono" style="font-size:10.5px;color:var(--ink-3)">${pct(x.reject_rate)}</span></td>
+      <td class="n">${x.median_heart_rate.toFixed(0)}</td><td class="n">${pct(x.nitro_rate,0)}</td>
+      <td>${eff}</td></tr>`;}).join('');
+
+  const d=await get('/api/field/detector-transitions');
+  $('det').innerHTML=d.map(t=>{
+    const shift=(t.median_tpv_after/t.median_tpv_before-1)*100;
+    return `<div style="border:1px solid var(--rule);background:var(--surface-2);padding:14px 16px;margin-bottom:12px">
+      <div style="font-weight:600">${t.site_name}</div>
+      <div class="mono" style="font-size:11.5px;color:var(--ink-3);margin-bottom:10px">EID -> PCD on day ${t.detector_switch_day} &middot; ${t.scanner_make} ${t.scanner_model}</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div><div class="eyebrow">Before</div><div class="mono" style="font-size:18px">${t.median_tpv_before.toFixed(0)} mm3</div></div>
+        <div><div class="eyebrow">After</div><div class="mono" style="font-size:18px;color:var(--crit)">${t.median_tpv_after.toFixed(0)} mm3</div></div>
+        <div><div class="eyebrow">Shift</div><div class="mono" style="font-size:18px;color:var(--crit)">${shift.toFixed(1)}%</div></div>
+      </div></div>`;}).join('');
+}
+
+async function evidencePack(){
+  const pack=await get('/api/evidence/'+$('claimSel').value),c=pack.content;
+  const ref=c.population.reference||c.population;
+  const hop=(l,v)=>`<div class="hop"><div class="lbl">${l}</div><div>${v}</div></div>`;
+  $('packTrace').innerHTML=
+    hop('Claim',c.claim)+
+    hop('Manifest',`<span class="mono" id="packHash">${pack.manifest_sha256}</span>`)+
+    hop('Population',`reference n=<b>${num(ref.n)}</b> &middot; sha <span class="mono" style="font-size:12px">${ref.case_id_sha256.slice(0,24)}...</span>`)+
+    hop('Code version',`<span class="mono">${c.code_version}</span>`)+
+    hop('Warehouse',`grain <span class="mono" style="font-size:12px">${c.spine_fingerprint.grain_sha256.slice(0,24)}...</span> &middot; ${num(c.spine_fingerprint.row_counts.fct_case_spine)} cases`)+
+    hop('Method',Object.entries(c.method).map(([k,v])=>`<b>${k}</b>: ${v}`).join('<br>'))+
+    hop('Limitations','<ul style="margin:0;padding-left:18px">'+c.limitations.map(l=>`<li>${l}</li>`).join('')+'</ul>')+
+    '<div id="hashCheck"></div>';
+}
+
+const STATE_TAG={open:'crit',acknowledged:'warn',investigating:'info',
+                 resolved:'ok',dismissed:'info'};
+let TRANSITION_MAP={};
+
+async function loadActions(){
+  const d=await get('/api/actions');
+  TRANSITION_MAP=d.transitions;
+  const openCount=d.items.filter(i=>['open','acknowledged','investigating'].includes(i.state)).length;
+  const navBtn=document.querySelector('#nav button[data-k="actions"]');
+  // aria-hidden keeps the button's ACCESSIBLE NAME exactly "Actions" - the badge
+  // is decoration. Without it, get_by_role(name="Actions") stops matching the
+  // moment the first work item appears, which is a hard-to-diagnose way for every
+  // downstream test and assistive technology to lose the button.
+  navBtn.innerHTML='Actions'+(openCount?` <span class="tag crit" aria-hidden="true" style="margin-left:4px">${openCount}</span>`:'');
+  $('actionList').innerHTML=d.items.length?d.items.map(i=>`
+    <div class="finding-card" data-aid="${i.action_id}" style="margin-bottom:14px">
+      <div class="fc-head" style="padding:14px 18px 12px">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="tag ${STATE_TAG[i.state]||'info'}">${i.state}</span>
+          <span class="tag info">${i.kind.replace(/_/g,' ')}</span>
+          <span class="mono" style="font-size:10.5px;color:var(--ink-3)">grain ${i.grain_sha} &middot; ${i.events} event(s)</span>
+        </div>
+        <div style="font-weight:600;margin-top:8px">${i.title}</div>
+      </div>
+      <div class="fc-body" style="padding:12px 18px">
+        <div class="ctl" style="margin:0">
+          <select class="trSel">${(TRANSITION_MAP[i.state]||[]).map(t=>`<option>${t}</option>`).join('')}</select>
+          <input class="trNote" placeholder="note (required for the audit trail)"
+            style="flex:1 1 220px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+          <button class="btn trGo">Apply</button>
+          <button class="btn trAudit">Audit trail</button>
+        </div>
+        <div class="trOut" style="font-size:12.5px;margin-top:8px"></div>
+        <div class="trTrail trace" style="display:none;margin-top:10px"></div>
+      </div>
+    </div>`).join('')
+    :'<div style="color:var(--ink-3)">No work items. Press "Sync findings" to derive them from the warehouse.</div>';
+}
+
+async function wireActions(){
+  $('syncBtn').onclick=async()=>{
+    const r=await fetch('/api/actions/sync',{method:'POST'}).then(x=>x.json());
+    $('syncOut').textContent=`${r.created.length} new / ${r.total_items} total`;
+    loadActions();
+  };
+  $('actionList').onclick=async e=>{
+    const card=e.target.closest('[data-aid]');if(!card)return;
+    const aid=card.dataset.aid;
+    if(e.target.closest('.trGo')){
+      const body={to_state:card.querySelector('.trSel').value,
+                  actor:$('actorIn').value,note:card.querySelector('.trNote').value};
+      const res=await fetch(`/api/actions/${aid}/transition`,
+        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const out=card.querySelector('.trOut');
+      if(res.ok){loadActions();}
+      else{const err=await res.json();
+        out.innerHTML=`<span class="tag crit">refused</span> ${err.detail}`;}
+    }
+    if(e.target.closest('.trAudit')){
+      const trail=(await fetch(`/api/actions/${aid}/audit`).then(x=>x.json())).events;
+      const box=card.querySelector('.trTrail');
+      box.style.display=box.style.display==='none'?'block':'none';
+      box.innerHTML=trail.map(ev=>`<div class="hop">
+        <div class="lbl">${ev.occurred_at.slice(0,16)}</div>
+        <div><b>${ev.actor}</b>: ${ev.from_state?ev.from_state+' &rarr; ':''}${ev.to_state}
+          <span style="color:var(--ink-3)">&mdash; ${ev.note}</span></div></div>`).join('');
+    }
+  };
+}
+
+async function loadSigned(){
+  const rows=await get('/api/evidence/signed');
+  $('signedTbl').tBodies[0].innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="mono" style="font-size:11.5px">${r.claim_type}</td>
+    <td class="mono" style="font-size:11.5px">${r.manifest_sha.slice(0,16)}...</td>
+    <td>${r.actor} <span style="color:var(--ink-3)">(${r.role})</span></td>
+    <td class="n" style="font-size:11.5px">${r.signed_at.slice(0,16)}</td>
+    <td>${r.verification==='verified'?'<span class="tag ok">verified</span>'
+        :`<span class="tag crit">${r.verification}</span>`}</td></tr>`).join('')
+    :'<tr><td colspan="5" style="color:var(--ink-3)">nothing signed yet</td></tr>';
+}
+
+function wireSigning(){
+  $('signBtn').onclick=async()=>{
+    const res=await fetch(`/api/evidence/${$('claimSel').value}/sign`,
+      {method:'POST',headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({actor:$('signActor').value,role:$('signRole').value,
+                            note:$('signNote').value})});
+    const out=$('signOut');
+    if(res.ok){const r=await res.json();
+      out.innerHTML=`<div class="finding" id="signVerdict" style="background:var(--ok-bg);border-color:var(--ok)">
+        <b>Signed.</b> Pack frozen as <span class="mono" style="font-size:12px">${r.manifest_sha256.slice(0,16)}...</span></div>`;
+      loadSigned();
+    }else{const err=await res.json();
+      out.innerHTML=`<div class="finding" id="signVerdict"><b>Refused.</b> ${err.detail}</div>`;}
+  };
+}
+
+async function loadShadow(){
+  const g=+$('shGuard').value, tol=+$('shTol').value;
+  $('shGuardOut').textContent='±'+g.toFixed(3);
+  $('shTolOut').textContent=(tol*100).toFixed(1)+'%';
+  const [r,tr]=await Promise.all([
+    get(`/api/shadow?tolerance=${tol}&guard=${g}`),
+    get(`/api/shadow/tradeoff?tolerance=${tol}`)]);
+  $('shStats').innerHTML=[
+    [num(r.volume.auto_released),'cases auto-released'],
+    [pct(r.volume.auto_share,0),'of accepted volume'],
+    [num(r.capacity.analyst_hours_returned)+' h','analyst time returned'],
+    [r.capacity.fte_equivalent,'FTE equivalent'],
+    [r.harm.changed_answers,'changed answers'],
+    [r.harm.would_be_false_negatives,'would-be false negatives'],
+    [r.sla.median_turnaround_before_min+' → '+r.sla.median_turnaround_after_min,'median TAT (min)'],
+  ].map(([v,k])=>`<div><span class="v" style="font-size:18px">${v}</span><span class="k">${k}</span></div>`).join('')
+  +`<div style="grid-column:1/-1;padding:8px 15px;font-size:11.5px;color:var(--ink-3)">
+     FTE arithmetic: ${r.capacity.assumptions}. Auto cases skip the human step; queueing approximated by subtracting analyst minutes.</div>`;
+  $('shCurve').tBodies[0].innerHTML=tr.curve.map(c=>{
+    const cur=Math.abs(c.guard_band-g)<1e-9;
+    return `<tr style="${cur?'background:var(--info-bg)':''}">
+      <td class="n mono">${c.guard_band.toFixed(3)}</td>
+      <td class="n">${num(c.auto_released)}</td>
+      <td class="n">${num(c.hours_returned)}</td>
+      <td class="n">${c.changed_answers}</td>
+      <td class="n" style="color:var(--crit)">${c.would_be_false_negatives}</td></tr>`;}).join('');
+  $('shLedger').tBodies[0].innerHTML=r.harm.ledger.length?r.harm.ledger.map(x=>`<tr>
+    <td class="mono">${x.case_id}${x.has_complaint?' <span class="tag crit">complaint</span>':''}</td>
+    <td><span class="tag ${x.direction==='would_be_false_negative'?'crit':'warn'}">${x.direction.replace('would_be_','').replace('_',' ')}</span></td>
+    <td class="n mono" style="font-size:11.5px">${x.ffr_pre.toFixed(3)} → ${x.ffr_post.toFixed(3)}</td>
+    <td class="n mono" style="font-size:11.5px">${x.distance_from_threshold.toFixed(3)}</td></tr>`).join('')
+    :'<tr><td colspan="4" style="color:var(--ok)">no changed answers under this policy</td></tr>';
+  $('shFraming').textContent=r.framing;
+}
+
+function wireShadow(){
+  $('shGuard').oninput=loadShadow;
+  $('shTol').oninput=loadShadow;
+  $('shSign').onclick=async()=>{
+    const g=+$('shGuard').value;
+    const res=await fetch('/api/evidence/policy/sign',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({actor:$('actorIn')?$('actorIn').value:'andrii',
+        role:$('shRole').value||'program lead',note:'shadow policy freeze',
+        tolerance:+$('shTol').value,guard:g})});
+    $('shSignOut').textContent=res.ok
+      ?'signed '+(await res.json()).manifest_sha256.slice(0,12)+'…'
+      :'refused: '+(await res.json()).detail;
+  };
+}
+
+const INV_TAG={received:'info',under_investigation:'warn',decided:'ok',closed:'ok'};
+let INV_FILTER='overdue', INV_CACHE=null;
+
+function invFiltered(items){
+  const f={
+    all:()=>true,
+    overdue:i=>i.overdue,
+    actionable:i=>['received','under_investigation','decided'].includes(i.state),
+    closed:i=>i.state==='closed',
+  }[INV_FILTER]||(()=>true);
+  // Urgency order: overdue first (most negative clock first), then open states,
+  // then by clock ascending - the triage order a Product Investigator needs,
+  // replacing an 81-row manual scan (cycle-0 finding F3).
+  const rank={received:0,under_investigation:1,decided:2,closed:3};
+  return items.filter(f).sort((a,b)=>
+    (b.overdue-a.overdue) || (a.overdue ? a.days_remaining-b.days_remaining
+      : (rank[a.state]-rank[b.state] || a.days_remaining-b.days_remaining)));
+}
+
+async function loadInvestigations(){
+  const b=await get('/api/investigations');
+  INV_CACHE=b;
+  $('invToday').textContent=`today = day ${b.today} · deadline ${b.deadline_days} days`;
+  $('invStats').innerHTML=[
+    [b.summary.received,'received'],[b.summary.under_investigation,'investigating'],
+    [b.summary.decided,'decided'],[b.summary.closed,'closed'],
+    [b.summary.overdue,'OVERDUE'],
+  ].map(([v,k])=>`<div><span class="v" style="font-size:20px;${k==='OVERDUE'&&v?'color:var(--crit)':''}">${v}</span><span class="k">${k}</span></div>`).join('');
+  const counts={all:b.items.length,
+    overdue:b.items.filter(i=>i.overdue).length,
+    actionable:b.items.filter(i=>['received','under_investigation','decided'].includes(i.state)).length,
+    closed:b.items.filter(i=>i.state==='closed').length};
+  $('invFilters').innerHTML=[['overdue','Overdue'],['actionable','Actionable'],
+    ['closed','Closed'],['all','All']].map(([k,lab])=>
+    `<button class="chipBtn btn" data-f="${k}" aria-pressed="${INV_FILTER===k}"
+       style="${INV_FILTER===k?'background:var(--accent-2);color:#fff;border-color:var(--accent-2)':''}">${lab} (${counts[k]})</button>`).join('');
+  $('invFilters').onclick=e=>{const btn=e.target.closest('[data-f]');
+    if(btn){INV_FILTER=btn.dataset.f;loadInvestigations();}};
+  $('invBoard').tBodies[0].innerHTML=invFiltered(b.items).map(i=>`
+    <tr data-inv="${i.complaint_id}">
+      <td class="mono">C-${String(i.complaint_id).padStart(3,'0')}</td>
+      <td>${i.complaint_type.replace(/_/g,' ')}</td>
+      <td><span class="tag ${INV_TAG[i.state]}">${i.state.replace(/_/g,' ')}</span>
+          ${i.decision?`<span class="tag ${i.decision==='mdr_reportable'?'crit':'info'}">${i.decision.replace('_',' ')}${i.decision_late?' · LATE':''}</span>`:''}</td>
+      <td class="n mono" style="font-size:11.5px;${i.overdue?'color:var(--crit);font-weight:600':''}">${i.overdue?'OVERDUE ':''}${i.days_remaining}d</td>
+      <td>${i.state==='received'?`<button class="btn invOpen" style="padding:3px 9px;font-size:11px">Open</button>`
+          :i.state!=='closed'?`<button class="btn invView" style="padding:3px 9px;font-size:11px">Work</button>`
+          :`<button class="btn invView" style="padding:3px 9px;font-size:11px">Record</button>`}</td>
+    </tr>`).join('');
+}
+
+async function showInvestigation(cid){
+  history.replaceState(null,'','#investigation='+cid);
+  const state=(INV_CACHE?INV_CACHE.items.find(i=>i.complaint_id===cid):null)?.state||'received';
+  if(state==='closed'){return showSealedRecord(cid);}
+  const f=await get(`/api/investigations/${cid}/file`);
+  const d=$('invDrawer');d.style.display='block';
+  const sib=f.siblings.map(x=>`<tr><td>${x.scope}</td><td class="n">${x.cases}</td>
+    <td class="n">${x.complaints}</td><td class="n">${x.p_vs_rest.toFixed(4)}</td>
+    <td>${x.elevated?'<span class="tag crit">elevated</span>':'<span class="tag info">-</span>'}</td></tr>`).join('');
+  d.innerHTML=`
+    <div style="font-weight:600;margin-bottom:10px">Investigation file — C-${String(cid).padStart(3,'0')}
+      <span class="mono" style="font-size:11px;color:var(--ink-3)">grain ${f.warehouse_grain}</span></div>
+    <div class="g2">
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px">Chronology</div>
+        ${f.chronology.map(e=>`<div style="font-size:13px;padding:3px 0"><span class="mono" style="color:var(--ink-3)">day ${e.day}</span> ${e.event}</div>`).join('')}
+        <div class="eyebrow" style="margin:12px 0 6px">What the correction changed</div>
+        <div style="font-size:13.5px">&Delta;FFR ${f.correction.delta_ffr} — ${f.correction.meaning}
+          ${f.correction.grey_zone_delivery?'<span class="tag warn">grey zone</span>':''}</div>
+        <div class="eyebrow" style="margin:12px 0 6px">Device context</div>
+        <div style="font-size:13.5px" class="mono">${f.device.model_version} · ${f.device.scanner} · ${f.device.detector_at_scan}
+          ${f.device.release_flag.elevated?'<span class="tag crit">release cohort elevated</span>':''}</div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px">Isolated or systemic? (significance-tested)</div>
+        <div class="tw"><table><thead><tr><th>Scope</th><th class="n">Cases</th><th class="n">Complaints</th><th class="n">p</th><th></th></tr></thead><tbody>${sib}</tbody></table></div>
+        <div class="eyebrow" style="margin:12px 0 6px">MDR assessment (decision support)</div>
+        ${f.mdr_assessment.rule_trace.map(t=>`<div style="font-size:12.5px;padding:2px 0">• ${t}</div>`).join('')}
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:4px">${f.mdr_assessment.disclaimer}</div>
+      </div>
+    </div>
+    ${state!=='under_investigation'?'':''}
+    <div class="ctl" style="margin-top:14px" id="invDecideRow" data-cid="${cid}">
+      <select id="invDecision" aria-label="reportability decision">
+        <option value="mdr_reportable" ${f.mdr_assessment.suggested==='mdr_reportable'?'selected':''}>mdr_reportable</option>
+        <option value="not_reportable" ${f.mdr_assessment.suggested==='not_reportable'?'selected':''}>not_reportable</option>
+      </select>
+      <input id="invRationale" aria-label="decision rationale"
+        placeholder="documented rationale (required, substantive)"
+        style="flex:1 1 260px;font:13px 'IBM Plex Sans',sans-serif;padding:6px 9px;background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
+      <button class="btn" id="invDecide">Record decision</button>
+      <button class="btn" id="invClose">Close &amp; seal record</button>
+      <span id="invOut" style="font-size:12.5px"></span>
+    </div>`;
+  if(state==='decided'){
+    $('invDecision').disabled=true;$('invRationale').disabled=true;
+    $('invDecide').style.display='none';
+    $('invOut').innerHTML='<span class="tag ok">decided</span> awaiting seal';
+  }
+  $('invDecide').onclick=async()=>{
+    const res=await fetch(`/api/investigations/${cid}/decide`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({decision:$('invDecision').value,
+        actor:$('invActor').value,rationale:$('invRationale').value})});
+    const j=await res.json();
+    $('invOut').innerHTML=res.ok
+      ?`<span class="tag ok">decided</span>${j.late?' <span class="tag crit">LATE</span>':''}`
+      :`<span class="tag crit">refused</span> ${j.detail}`;
+    if(res.ok){$('invDecision').disabled=true;$('invRationale').disabled=true;
+      $('invDecide').style.display='none';}
+    loadInvestigations();
+  };
+  $('invClose').onclick=async()=>{
+    const res=await fetch(`/api/investigations/${cid}/close`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({actor:$('invActor').value})});
+    const j=await res.json();
+    if(res.ok){await loadInvestigations();return showSealedRecord(cid);}
+    $('invOut').innerHTML=`<span class="tag crit">refused</span> ${j.detail}`;
+    loadInvestigations();
+  };
+}
+
+async function showSealedRecord(cid){
+  // F2: the sealed record stays reachable - hash, verification, audit trail.
+  const r=await get(`/api/investigations/${cid}/record`);
+  const d=$('invDrawer');d.style.display='block';
+  d.innerHTML=`
+    <div style="font-weight:600;margin-bottom:10px">Sealed investigation record —
+      C-${String(cid).padStart(3,'0')}</div>
+    <div class="statrow">
+      <div><span class="v" style="font-size:14px" class="mono">${r.manifest_sha256}</span>
+        <span class="k">manifest sha-256</span></div>
+      <div><span class="v" style="font-size:16px">${r.verification==='verified'
+          ?'<span class="tag ok">verified</span>':'<span class="tag crit">'+r.verification+'</span>'}</span>
+        <span class="k">re-verified on read</span></div>
+      <div><span class="v" style="font-size:16px">${r.decision.outcome.replace('_',' ')}
+          ${r.decision.late?'<span class="tag crit">LATE</span>':''}</span>
+        <span class="k">decision · ${r.decision.decided_by}</span></div>
+    </div>
+    <div class="eyebrow" style="margin:14px 0 6px">Audit trail (as sealed)</div>
+    ${r.audit_trail.map(e=>`<div style="font-size:12.5px;padding:2px 0">
+      <span class="mono" style="color:var(--ink-3)">${e.occurred_at.slice(0,16)}</span>
+      <b>${e.actor}</b> ${e.from_state?e.from_state+' → ':''}${e.to_state}
+      <span style="color:var(--ink-3)">— ${e.note}</span></div>`).join('')}
+    <div class="mono" style="font-size:11px;color:var(--ink-3);margin-top:10px">${r.record_path}</div>`;
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function wireInvestigations(){
+  $('invBoard').onclick=async e=>{
+    const row=e.target.closest('tr[data-inv]');if(!row)return;
+    const cid=+row.dataset.inv;
+    if(e.target.closest('.invOpen')){
+      const res=await fetch(`/api/investigations/${cid}/open`,{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({actor:$('invActor').value})});
+      if(res.ok){await loadInvestigations();showInvestigation(cid);}
+      return;
+    }
+    if(e.target.closest('.invView')||e.target.closest('td')){showInvestigation(cid);}
+  };
+}
+
+function drawPlatform(){
+  const SRC=[['Aurora','case management'],['S3 label store','analyst corrections'],
+             ['Smarteeva','complaints'],['Ketryx','risk file / tests'],
+             ['DICOM headers','scanner / detector'],['Harness','releases'],
+             ['Salesforce','accounts']];
+  const FEAT=[['Analyst telemetry','Operations','--accent-2'],
+              ['Automation frontier','Operations','--accent-2'],
+              ['Site conformance','Field','--ok'],
+              ['Detector monitor','Field','--ok'],
+              ['Hazard matching','Quality','--crit'],
+              ['Complaint traversal','Quality','--crit'],
+              ['Disparity monitor','Quality','--crit'],
+              ['Release regression','Engineering','--warn'],
+              ['Evidence packs','Regulatory','--accent']];
+  const box=(x,y,w,h,t,sub,fill,stroke)=>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke||'var(--rule-2)'}"/>
+     <text x="${x+11}" y="${y+17}" font-size="11.5" font-family="IBM Plex Sans,sans-serif" font-weight="600" fill="var(--ink)">${t}</text>
+     ${sub?`<text x="${x+11}" y="${y+30}" font-size="9" font-family="IBM Plex Mono,monospace" fill="var(--ink-3)">${sub}</text>`:''}`;
+  let s='';
+  SRC.forEach((v,i)=>{const y=16+i*46;
+    s+=box(8,y,168,36,v[0],v[1],'var(--surface-2)');
+    s+=`<path d="M176 ${y+18} Q 236 ${y+18} 262 214" stroke="var(--rule-2)" stroke-width="1" fill="none"/>`;});
+  s+=box(264,180,168,84,'CASE SPINE','','var(--info-bg)','var(--accent-2)');
+  s+=`<text x="278" y="222" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="var(--ink-2)">case / site / scanner</text>
+      <text x="278" y="236" font-size="9.5" font-family="IBM Plex Mono,monospace" fill="var(--ink-2)">model / time / stratum</text>
+      <text x="278" y="254" font-size="9" font-family="IBM Plex Mono,monospace" fill="var(--accent-2)">integrate ONCE</text>`;
+  FEAT.forEach((f,i)=>{const y=14+i*50;
+    s+=`<path d="M432 222 Q 500 ${y+17} 556 ${y+17}" stroke="var(--rule-2)" stroke-width="1" fill="none"/>`;
+    s+=box(558,y,248,34,f[0],'','var(--surface-2)','var('+f[2]+')');
+    s+=`<text x="796" y="${y+21}" font-size="8.5" font-family="IBM Plex Mono,monospace" fill="var(${f[2]})" text-anchor="end">${f[1]}</text>`;});
+  [[5,7],[2,3],[6,1],[0,1],[4,8]].forEach(([a,b],k)=>{
+    const ya=14+a*50+17,yb=14+b*50+17,bow=826+k*20;
+    s+=`<path d="M806 ${ya} Q ${bow} ${(ya+yb)/2} 806 ${yb}" stroke="var(--accent)" stroke-width="1.1" fill="none" stroke-dasharray="3 3" opacity="0.75"/>`;});
+  s+=`<text x="932" y="474" font-size="9" font-family="IBM Plex Mono,monospace" fill="var(--accent)" text-anchor="end">dashed = joins across department boundaries</text>`;
+  $('platformMap').innerHTML=s;
+
+  $('costTbl').tBodies[0].innerHTML=[
+    ['Source-system integration','source system','high','<b>zero</b> &mdash; already paid','high &mdash; re-paid'],
+    ['Security &amp; privacy review','system boundary','high','<b>zero</b> &mdash; same boundary','high &mdash; new boundary'],
+    ['Metric definition','metric','medium','<b>zero</b> &mdash; semantic layer','medium &mdash; and it will drift'],
+    ['Auth, RBAC, audit trail','tool','medium','<b>zero</b> &mdash; inherited','medium'],
+    ['User learning','tool','high','<b>low</b> &mdash; one more lens','high &mdash; new mental model'],
+    ['Deployment','feature','low','low','low'],
+    ['Validation record','tool','medium','<b>low</b> &mdash; extends the plan','medium &mdash; new plan'],
+  ].map(r=>`<tr><td>${r[0]}</td><td class="mono" style="font-size:11.5px">${r[1]}</td>
+    <td class="n">${r[2]}</td><td class="n" style="color:var(--ok)">${r[3]}</td>
+    <td class="n" style="color:var(--crit)">${r[4]}</td></tr>`).join('');
+}
+
+async function showSite(id){
+  const s=await get('/api/site/'+id);
+  openLens('field',false);
+  history.replaceState(null,'','#site='+id);
+  $('scName').textContent=s.site_name+' — '+s.region;
+  const cf=s.conformance;
+  $('scStats').innerHTML=[
+    [s.cases,'cases'],[pct(s.reject_rate),'reject rate'],
+    [cf?pct(cf.expected_reject_rate):'—','expected from mix'],
+    [cf?(cf.excess_reject_rate>=0?'+':'')+pct(cf.excess_reject_rate):'—','excess'],
+    [s.median_heart_rate.toFixed(0),'median HR'],[pct(s.nitro_rate,0),'nitro'],
+    [s.scanner_make+' '+s.scanner_model,'scanner'],
+    [s.detector_switch_day!=null?'day '+s.detector_switch_day:'never','detector swap'],
+  ].map(([v,k])=>`<div><span class="v" style="font-size:17px">${v}</span><span class="k">${k}</span></div>`).join('');
+  $('scHaz').innerHTML=s.hazards.length?s.hazards.map(h=>
+    `<a href="#hazard=${h.hazard_id}" class="tag crit" style="margin:0 6px 6px 0;text-decoration:none">${h.hazard_id} ×${h.matches}</a>`).join('')
+    :'<span style="color:var(--ink-3);font-size:13px">none realised</span>';
+  $('scRel').tBodies[0].innerHTML=s.by_release.map(r=>
+    `<tr><td class="mono">${r.model_version}</td><td class="n">${r.accepted_cases}</td>
+     <td class="n">${pct(r.actionable_correction_rate,2)}</td></tr>`).join('');
+  $('scComp').innerHTML=s.complaints.length?s.complaints.map(c=>
+    `<a href="#complaint=${c.complaint_id}" style="display:block;padding:6px 0;border-bottom:1px solid var(--rule);color:var(--ink);text-decoration:none">
+      <span class="mono">C-${String(c.complaint_id).padStart(3,'0')}</span>
+      &middot; ${c.complaint_type.replace(/_/g,' ')} &middot; day ${c.complaint_day}
+      ${c.mdr_reportable?'<span class="tag crit">MDR</span>':''}</a>`).join('')
+    :'<span style="color:var(--ink-3);font-size:13px">no complaints from this site</span>';
+  const panel=$('siteCardPanel');panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function doAsk(){
+  const q=$('askIn').value.trim();if(!q)return;
+  const r=await get('/api/ask?q='+encodeURIComponent(q));
+  const out=$('askOut');out.style.display='block';
+  if(r.error){
+    out.innerHTML=`<b>Won't guess.</b> ${r.error}<div style="margin-top:6px;font-size:12.5px">
+      Try: ${r.try.slice(0,4).map(t=>`<a href="#" class="askTry" style="color:var(--accent-2)">${t}</a>`).join(' &middot; ')}</div>`;
+  }else{
+    out.innerHTML=`${r.answer} ${r.open?`<a href="#" class="askOpen" data-open='${JSON.stringify(r.open)}' style="color:var(--accent-2);font-weight:600">Open &rarr;</a>`:''}
+      <div style="font-size:11px;color:var(--ink-3);margin-top:6px">intent: ${r.provenance.resolved_intent}
+      &middot; deterministic router over spine/metrics.py &middot; no external LLM</div>`;
+  }
+  out.onclick=e=>{
+    const t=e.target.closest('.askTry');if(t){e.preventDefault();$('askIn').value=t.textContent;doAsk();return;}
+    const o=e.target.closest('.askOpen');if(o){e.preventDefault();
+      const spec=JSON.parse(o.dataset.open);
+      if(spec.site!=null)showSite(spec.site);
+      else if(spec.hazard){openLens('quality');loadComplaints({hazard_id:spec.hazard});}
+      else openLens(spec.lens);}
+  };
+}
+
+function wireCrossLinks(){
+  $('askBtn').onclick=doAsk;
+  $('askIn').onkeydown=e=>{if(e.key==='Enter')doAsk()};
+  $('haz').onclick=e=>{const r=e.target.closest('tr[data-hazard]');if(!r)return;
+    loadComplaints({hazard_id:r.dataset.hazard});
+    document.querySelector('#comp').scrollIntoView({behavior:'smooth',block:'center'});};
+  $('rel').onclick=e=>{const r=e.target.closest('tr[data-release]');if(!r)return;
+    openLens('quality');loadComplaints({model_version:r.dataset.release});};
+  const siteClick=e=>{const r=e.target.closest('tr[data-site]');if(r)showSite(+r.dataset.site);};
+  $('conf').onclick=siteClick;$('sites').onclick=siteClick;
+  document.body.addEventListener('click',e=>{
+    const a=e.target.closest('a[href^="#site="],a[href^="#hazard="],a[href^="#complaint="]');
+    if(!a)return;e.preventDefault();
+    history.replaceState(null,'',a.getAttribute('href'));applyHash();});
+}
+
+function redraw(){
+  drawEffort();drawDelta();drawRelease();drawDetector();drawDisparity();
+  drawConfidence();drawFrontier(+$('tol').value/100);drawPlatform();
+}
+$('tol').oninput=frontier;
+$('claimSel').onchange=evidencePack;
+$('verifyBtn').onclick=async()=>{
+  const which=$('claimSel').value;
+  const [a,b]=await Promise.all([get('/api/evidence/'+which),get('/api/evidence/'+which)]);
+  const same=a.manifest_sha256===b.manifest_sha256;
+  $('hashCheck').innerHTML=`<div class="finding" id="hashVerdict" data-same="${same}"
+    style="background:${same?'var(--ok-bg)':'var(--crit-bg)'};border-color:${same?'var(--ok)':'var(--crit)'}">
+    <b>${same?'Reproducible.':'NOT reproducible.'}</b> Two independent fetches
+    ${same?'produced the identical manifest hash':'produced DIFFERENT hashes'}
+    <span class="mono" style="font-size:12px">${a.manifest_sha256.slice(0,16)}...</span></div>`;
+};
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redraw,150)});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);
+
+(async()=>{
+  try{
+    await loadCore();
+    await operations();await quality();engineering();await field();
+    await frontier();await evidencePack();
+    wireCrossLinks();wireActions();wireSigning();wireShadow();wireInvestigations();
+    // The action layer is auxiliary: if its store is briefly lock-contended the
+    // portal must still hydrate, with the failure visible in its own lens rather
+    // than taking the whole page to data-ready="error".
+    try{await loadActions();await loadSigned();
+        await loadShadow();await loadInvestigations();}
+    catch(e){$('actionList').innerHTML=
+      `<div class="finding">Action store unavailable: ${e.message}. Retry with "Sync findings".</div>`;}
+    if(location.hash)applyHash();else redraw();
+    // Explicit readiness contract. Tests previously inferred "loaded" from
+    // incidental DOM (a table row existing), which is true BEFORE redraw() paints
+    // the canvases - so assertions landed in a window where tables were populated
+    // and every chart was still blank. Infer nothing; say so.
+    document.body.dataset.ready = "1";
+  }catch(e){
+    document.body.dataset.ready = "error";
+    document.querySelector('.wrap').insertAdjacentHTML('afterbegin',
+      `<div class="finding">Failed to load: ${e.message}. Run
+       <span class="mono">python -m deploy.local_deploy up</span>.</div>`);
+  }
+})();
+</script>
+</body>
+</html>

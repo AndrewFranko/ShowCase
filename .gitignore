@@ -1,0 +1,25 @@
+# virtualenvs
+.venv/
+.venv-dagster/
+
+# generated data & workflow state (rebuilt by `make all`; cycle state is reset
+# per assessment — nothing here is source)
+data/
+evidence/
+deploy/server.log
+deploy/.deploy-state.json
+
+# terraform local state (documented trade-off in infra/aws-free-tier/main.tf)
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars          # carries the basic-auth hash & your IP — never commit
+!*.auto.tfvars.example
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# playwright
+test-results/

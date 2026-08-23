@@ -1,0 +1,81 @@
+{
+  "cycle": "0",
+  "base": "http://127.0.0.1:8091",
+  "generated_at": "2026-08-23T11:06:07Z",
+  "counting_rules": "1 interaction = click/select/fill; waits included in wall time",
+  "tasks": [
+    {
+      "task": "T1",
+      "description": "P1: find the most urgent overdue false-negative; open it",
+      "completed": true,
+      "interactions": 2,
+      "wall_ms": 512,
+      "notes": [
+        "navigate to Quality",
+        "scanned 81 rows manually (no sort/filter)",
+        "open investigation"
+      ]
+    },
+    {
+      "task": "T2",
+      "description": "P1: decide with rationale and seal the record",
+      "completed": true,
+      "interactions": 3,
+      "wall_ms": 287,
+      "notes": [
+        "record decision",
+        "close and seal"
+      ]
+    },
+    {
+      "task": "T3",
+      "description": "P1: is this complaint isolated or systemic?",
+      "completed": false,
+      "interactions": 0,
+      "wall_ms": 11,
+      "notes": [
+        "sibling table missing",
+        "0 scope(s) flagged elevated"
+      ]
+    },
+    {
+      "task": "T4",
+      "description": "P2: locate audit trail and sealed hash of a LATE decision",
+      "completed": false,
+      "interactions": 3,
+      "wall_ms": 259,
+      "notes": [
+        "navigate to Quality",
+        "open the item",
+        "sealed hash NOT reachable from the UI after the fact; fell back to raw API - candidate high-sev finding"
+      ]
+    },
+    {
+      "task": "T5",
+      "description": "P3: guard band with >=600h returned and FN<=5; freeze+sign",
+      "completed": false,
+      "interactions": 1,
+      "wall_ms": 85,
+      "notes": [
+        "navigate to Operations",
+        "no curve row satisfies the brief"
+      ]
+    },
+    {
+      "task": "T6",
+      "description": "P3: produce the named would-be-FN list",
+      "completed": true,
+      "interactions": 0,
+      "wall_ms": 5,
+      "notes": [
+        "8 FN rows visible in the ledger"
+      ]
+    }
+  ],
+  "totals": {
+    "completed": 3,
+    "of": 6,
+    "interactions": 9,
+    "wall_ms": 1159
+  }
+}

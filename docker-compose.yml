@@ -1,0 +1,59 @@
+# Local deploy.
+#
+# Deliberately production-shaped rather than convenient: no bind mount over the
+# source, no --reload, no root, read-only root filesystem, dropped capabilities,
+# and the container is only reported healthy once /api/overview actually answers.
+#
+#   docker compose up -d --build
+#   docker compose ps          # wait for (healthy)
+#   docker compose logs -f api
+#
+# The Playwright suite in tests/e2e/test_deployed.py runs against this, not against
+# an in-process test client, so what it verifies is the artifact that would ship.
+
+services:
+  api:
+    build:
+      context: .
+      target: runtime
+    image: case-spine:local
+    container_name: case-spine
+    ports:
+      - "8088:8000"
+    environment:
+      # Placeholder for the real deployment: swapping this for a Redshift DSN
+      # makes the runtime stateless and the baked warehouse unnecessary.
+      SPINE_DSN: "duckdb:///srv/data/spine.duckdb"
+    read_only: true
+    volumes:
+      # The one declared write surface: action-layer workflow state and signed
+      # evidence packs. Everything else stays immutable.
+      - case-spine-state:/state
+    tmpfs:
+      - /tmp:size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import urllib.request,sys
+          sys.exit(0 if urllib.request.urlopen(
+              'http://127.0.0.1:8000/api/overview', timeout=4).status == 200 else 1)
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+volumes:
+  case-spine-state:

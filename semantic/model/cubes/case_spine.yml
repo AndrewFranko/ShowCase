@@ -1,0 +1,189 @@
+# Cube semantic model.
+#
+# This is the single most important file in the project and the reason Cube is in
+# the architecture at all. `actionable_correction_rate` is defined HERE, once, and
+# served identically to:
+#
+#   - the Case Spine portal   (Cube REST API)
+#   - Power BI                (Cube SQL API)
+#   - Tableau                 (Cube SQL API)
+#   - any notebook            (Cube SQL API)
+#
+# Without this, Operations computes it in Tableau, Engineering computes it in a
+# notebook, Quality computes it in Power BI, the three disagree by two points, and
+# the meeting is about whose number is right instead of what to do. That failure is
+# extremely common and completely avoidable.
+#
+# spine/metrics.py holds the reference implementation of the same measures.
+#
+# KNOWN GAP: nothing currently verifies that these definitions and metrics.py
+# agree. They are maintained by hand. That is the exact drift this file exists to
+# prevent, so it is tracked rather than glossed - see workflow/README.md.
+
+cubes:
+  - name: case_spine
+    sql_table: fct_case_spine
+    description: >
+      One row per case. The conformed grain for every lens. Contains no patient
+      identifiers, no DICOM UIDs, no pixel data and no analyst identity.
+
+    joins:
+      - name: site
+        sql: "{CUBE}.site_id = {site}.site_id"
+        relationship: many_to_one
+      - name: model_version_dim
+        sql: "{CUBE}.model_version = {model_version_dim}.model_version"
+        relationship: many_to_one
+
+    dimensions:
+      - name: case_id
+        sql: case_id
+        type: number
+        primary_key: true
+        # surrogate only; re-identification requires the separate key store
+        public: false
+
+      - name: case_day
+        sql: case_day
+        type: number
+
+      - name: stratum
+        sql: stratum
+        type: string
+        description: Calcium band / motion band / stent. The unit of automation analysis.
+
+      - name: model_version
+        sql: model_version
+        type: string
+
+      - name: detector_at_scan
+        sql: detector_at_scan
+        type: string
+        description: >
+          Detector generation on the day of the scan, not the site's current
+          detector. Photon-counting measures ~1/3 lower plaque volume than
+          energy-integrating, so resolving this at scan time is what makes a
+          scanner migration visible instead of silent.
+
+      - name: scanner_key
+        sql: scanner_key
+        type: string
+
+      - name: accepted
+        sql: accepted
+        type: number
+
+      - name: reject_reason
+        sql: reject_reason
+        type: string
+
+    measures:
+      - name: cases
+        type: count
+
+      - name: accepted_cases
+        type: count
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+
+      - name: rejected_cases
+        type: count
+        filters:
+          - sql: "{CUBE}.accepted = 0"
+
+      - name: reject_rate
+        sql: "1.0 - AVG({CUBE}.accepted)"
+        type: number
+        format: percent
+        description: >
+          Share of submitted studies not analysed. Published real-world range is
+          8-15%; motion artifact accounts for roughly 78% of them.
+
+      - name: actionable_corrections
+        sql: crossed_threshold
+        type: sum
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+
+      - name: actionable_correction_rate
+        sql: crossed_threshold
+        type: avg
+        format: percent
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+        description: >
+          THE metric. Share of accepted cases where analyst correction moved an FFR
+          value across the 0.80 decision threshold - i.e. where the human changed
+          the answer rather than confirming it. This is a safety measure; minutes
+          per case is a cost measure. Automation evidence requires this one.
+
+      - name: grey_zone_rate
+        sql: grey_zone
+        type: avg
+        format: percent
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+        description: Delivered with FFR in 0.75-0.80, where invasive agreement is weakest.
+
+      - name: median_analyst_min
+        sql: "MEDIAN({CUBE}.analyst_min)"
+        type: number
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+
+      - name: median_turnaround_min
+        sql: "MEDIAN({CUBE}.turnaround_min)"
+        type: number
+
+      - name: median_plaque_volume
+        sql: "MEDIAN({CUBE}.total_plaque_volume_mm3)"
+        type: number
+        filters:
+          - sql: "{CUBE}.accepted = 1"
+
+    pre_aggregations:
+      - name: by_stratum_release
+        measures: [accepted_cases, actionable_corrections, actionable_correction_rate]
+        dimensions: [stratum, model_version, detector_at_scan]
+        refresh_key:
+          every: 1 hour
+
+  - name: site
+    sql_table: dim_site
+    dimensions:
+      - name: site_id
+        sql: site_id
+        type: number
+        primary_key: true
+      - name: site_name
+        sql: site_name
+        type: string
+      - name: region
+        sql: region
+        type: string
+      - name: scanner_make
+        sql: scanner_make
+        type: string
+      - name: site_class
+        sql: site_class
+        type: string
+      - name: detector_switch_day
+        sql: detector_switch_day
+        type: number
+    measures:
+      - name: sites
+        type: count
+
+  - name: model_version_dim
+    sql_table: dim_model_version
+    dimensions:
+      - name: model_version
+        sql: model_version
+        type: string
+        primary_key: true
+      - name: released_day
+        sql: released_day
+        type: number
+      - name: release_seq
+        sql: release_seq
+        type: number

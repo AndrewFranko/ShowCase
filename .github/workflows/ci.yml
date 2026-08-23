@@ -1,0 +1,157 @@
+name: ci
+
+# CI is the validation evidence.
+#
+# Under FDA Computer Software Assurance (final Sept 2025, reissued 3 Feb 2026 to
+# align with QMSR), automated test results are acceptable objective evidence for
+# production and quality-system software, and the required record is: intended use,
+# risk-based rationale, objectives tested, testing performed, issues found,
+# conclusion. This workflow produces the "testing performed" half of that record on
+# every commit, which is what makes the validation plan cheap to keep current.
+#
+# The guardrail job is the one to point a quality engineer at: it proves in CI that
+# the service is read-only, carries no identifying columns, and exposes no endpoint
+# that dispositions a case. Those are the properties that keep this on the CSA side
+# of the device-software line, and asserting them in a document is weaker than
+# testing them on every push.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Seed fixture
+        run: python -m spine.generate
+
+      - name: Build spine and run data tests
+        run: python -m spine.build --check
+
+      - name: Unit, contract, guardrail and MCP tests
+        run: pytest -v --junitxml=test-results.xml
+
+      - name: Publish test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-evidence-${{ github.sha }}
+          path: |
+            test-results.xml
+            validation/csa-validation-plan.md
+          retention-days: 400   # exceeds a typical audit cycle
+
+  e2e:
+    # Own job: Playwright's sync API cannot share an event loop with the anyio
+    # async tests, and Chromium is a slow download that should not gate the fast
+    # suite. See the note in pyproject.toml.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          playwright install --with-deps chromium
+      - name: Build spine
+        run: |
+          python -m spine.generate
+          python -m spine.build
+      - name: Browser tests
+        run: pytest tests/e2e -v --junitxml=e2e-results.xml
+      - name: Publish trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ github.sha }}
+          path: |
+            e2e-results.xml
+            test-results/
+          retention-days: 14
+
+  deployed:
+    # Drives the client across a real process boundary: production-shaped uvicorn
+    # (multi-worker, no reload), health-gated startup, then Playwright sampling
+    # every canvas's alpha channel. This is the job that would have caught the
+    # stale-orphan deploy and the client falling five iterations behind the API.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          playwright install --with-deps chromium
+      - name: Deploy (build spine, health-gate, smoke every route)
+        run: python -m deploy.local_deploy up
+      - name: Browser suite against the deployment
+        run: DEPLOY_BASE=http://127.0.0.1:8090 pytest tests/e2e/test_deployed.py -v
+      - name: Tear down (reclaims the port, kills the worker tree)
+        if: always()
+        run: python -m deploy.local_deploy down
+
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          python -m spine.generate
+          python -m spine.build
+
+      - name: Regulatory boundary must hold
+        run: pytest tests/ -v -k "guardrail or phi or read_only or routing or write_routes"
+
+      - name: No new runtime dependencies without review
+        run: |
+          # 524B wants an SBOM; 62304 wants a SOUP list. Same dependency graph,
+          # two schemas. Generating it here keeps both current from one source.
+          pip install pip-licenses
+          pip-licenses --format=json --output-file=sbom-python.json
+          echo "dependency inventory written; attach to the SOUP list and the SBOM"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom-python.json
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Format and validate
+        run: |
+          terraform -chdir=infra fmt -check -diff
+          terraform -chdir=infra init -backend=false
+          terraform -chdir=infra validate

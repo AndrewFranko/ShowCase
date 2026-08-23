@@ -1,0 +1,83 @@
+{
+  "cycle": "1",
+  "base": "http://127.0.0.1:8091",
+  "generated_at": "2026-08-23T11:17:12Z",
+  "counting_rules": "1 interaction = click/select/fill; waits included in wall time",
+  "tasks": [
+    {
+      "task": "T1",
+      "description": "P1: find the most urgent overdue false-negative; open it",
+      "completed": true,
+      "interactions": 2,
+      "wall_ms": 454,
+      "notes": [
+        "navigate to Quality",
+        "default Overdue view is urgency-sorted; no scan",
+        "open investigation"
+      ]
+    },
+    {
+      "task": "T3",
+      "description": "P1: is this complaint isolated or systemic?",
+      "completed": true,
+      "interactions": 0,
+      "wall_ms": 8,
+      "notes": [
+        "sibling table present in drawer",
+        "0 scope(s) flagged elevated"
+      ]
+    },
+    {
+      "task": "T2",
+      "description": "P1: decide with rationale and seal the record",
+      "completed": true,
+      "interactions": 3,
+      "wall_ms": 507,
+      "notes": [
+        "record decision",
+        "close and seal"
+      ]
+    },
+    {
+      "task": "T4",
+      "description": "P2: locate audit trail and sealed hash of a LATE decision",
+      "completed": true,
+      "interactions": 3,
+      "wall_ms": 241,
+      "notes": [
+        "navigate to Quality",
+        "filter to Closed",
+        "open Record",
+        "manifest + verification + as-sealed trail visible"
+      ]
+    },
+    {
+      "task": "T5",
+      "description": "P3: guard band with >=600h returned and FN<=5; freeze+sign",
+      "completed": true,
+      "interactions": 4,
+      "wall_ms": 1835,
+      "notes": [
+        "navigate to Operations",
+        "curve row satisfying brief: g=0.080",
+        "freeze policy"
+      ]
+    },
+    {
+      "task": "T6",
+      "description": "P3: produce the named would-be-FN list",
+      "completed": true,
+      "interactions": 0,
+      "wall_ms": 4,
+      "notes": [
+        "2 FN rows visible in the ledger"
+      ]
+    }
+  ],
+  "totals": {
+    "completed": 6,
+    "of": 6,
+    "interactions": 12,
+    "wall_ms": 3049
+  }
+}

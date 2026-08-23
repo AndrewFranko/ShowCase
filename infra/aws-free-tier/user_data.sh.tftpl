@@ -1,0 +1,135 @@
+#!/bin/bash
+# Case Spine — first-boot provisioning (Amazon Linux 2023, cloud-init).
+#
+# Everything the instance runs is written here, versioned in the repo, and
+# replaced on change (user_data_replace_on_change) — no hand-configured pet.
+# No SSH is provisioned anywhere in this file: administration is SSM only.
+set -euxo pipefail
+
+dnf install -y docker
+systemctl enable --now docker
+
+# docker compose v2 plugin
+mkdir -p /usr/local/lib/docker/cli-plugins
+ARCH=$(uname -m); [ "$ARCH" = "aarch64" ] && ARCH=aarch64 || ARCH=x86_64
+curl -fsSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$${ARCH}" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+install -d -m 0755 /opt/case-spine
+
+# ---------------------------------------------------------------- compose stack
+cat > /opt/case-spine/docker-compose.yml <<'COMPOSE'
+services:
+  api:
+    image: ${image}
+    container_name: case-spine
+    restart: unless-stopped
+    read_only: true
+    volumes:
+      - case-spine-state:/state
+    tmpfs:
+      - /tmp:size=32m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/overview', timeout=4).status==200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    volumes:
+      - /opt/case-spine/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  case-spine-state:
+  caddy-data:
+  caddy-config:
+COMPOSE
+
+# ---------------------------------------------------------------- Caddy: TLS + basic-auth
+# The portal has no auth of its own (the OIDC seam is unbound); Caddy is the
+# minimum credible gate before anything faces the internet.
+%{ if domain != "" ~}
+cat > /opt/case-spine/Caddyfile <<'CADDY'
+${domain} {
+    basic_auth {
+        ${basic_auth_user} ${basic_auth_hash}
+    }
+    reverse_proxy api:8000
+}
+CADDY
+%{ else ~}
+cat > /opt/case-spine/Caddyfile <<'CADDY'
+:443 {
+    tls internal
+    basic_auth {
+        ${basic_auth_user} ${basic_auth_hash}
+    }
+    reverse_proxy api:8000
+}
+:80 {
+    redir https://{host}{uri} permanent
+}
+CADDY
+%{ endif ~}
+
+cd /opt/case-spine
+docker compose pull
+docker compose up -d
+
+# ---------------------------------------------------------------- update helper (run via SSM)
+cat > /usr/local/bin/case-spine-update <<'UPD'
+#!/bin/bash
+# Deliberate, loud updates — no silent auto-updater (see workflow/06: silent
+# deploys serving stale-or-unexpected code are this project's cautionary tale).
+set -euo pipefail
+cd /opt/case-spine
+docker compose pull
+docker compose up -d
+docker image prune -f
+docker compose ps
+UPD
+chmod +x /usr/local/bin/case-spine-update
+
+# ---------------------------------------------------------------- nightly /state -> S3
+cat > /usr/local/bin/case-spine-backup <<'BKP'
+#!/bin/bash
+set -euo pipefail
+SRC=$(docker volume inspect case-spine_case-spine-state -f '{{.Mountpoint}}')
+aws s3 sync "$SRC" "s3://${backup_bucket}/state/" --region ${region}
+BKP
+chmod +x /usr/local/bin/case-spine-backup
+
+cat > /etc/systemd/system/case-spine-backup.service <<'SVC'
+[Unit]
+Description=Case Spine /state backup to S3
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/case-spine-backup
+SVC
+
+cat > /etc/systemd/system/case-spine-backup.timer <<'TMR'
+[Unit]
+Description=Nightly Case Spine state backup
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+[Install]
+WantedBy=timers.target
+TMR
+
+systemctl daemon-reload
+systemctl enable --now case-spine-backup.timer

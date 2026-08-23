@@ -1,0 +1,63 @@
+name: release
+
+# Build the container image and push to GHCR on every main push.
+#
+# The image IS the release: the spine is materialised during the build with
+# `spine.build --check`, so the 11 data tests gate the artifact itself — a bad
+# warehouse fails the build, never a deploy. The AWS free-tier instance
+# (infra/aws-free-tier) pulls whatever this publishes; updates there are pulled
+# deliberately via `case-spine-update`, never auto-pushed.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/case-spine
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke the pushed image before anyone can pull a broken one
+        run: |
+          IMG="ghcr.io/${{ github.repository_owner }}/case-spine:sha-$(git rev-parse --short HEAD)"
+          # metadata-action's sha tag format is sha-<shortsha>
+          docker run -d --name smoke -p 8000:8000 "$IMG" || \
+            docker run -d --name smoke -p 8000:8000 "$(echo '${{ steps.meta.outputs.tags }}' | head -1)"
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8000/api/overview >/dev/null; then ok=1; break; fi
+            sleep 3
+          done
+          [ "${ok:-0}" = "1" ] || { docker logs smoke; exit 1; }
+          curl -fsS http://127.0.0.1:8000/api/overview | grep -q accepted_cases
+          docker rm -f smoke

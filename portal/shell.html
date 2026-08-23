@@ -1,0 +1,584 @@
+<title>Case Ops Telemetry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F7F8;--surface:#FFFFFF;--surface-2:#EAEEF1;--surface-3:#DFE5EA;
+  --ink:#11161C;--ink-2:#3C4653;--ink-3:#6A7583;
+  --rule:#D5DBE1;--rule-2:#C2CAD2;
+  --accent:#9E2B1E;--accent-2:#26556E;
+  --ok:#3F7350;--warn:#B26A1B;--crit:#A32718;
+  --ok-bg:#E2EDE5;--warn-bg:#F7ECDA;--crit-bg:#F6E4E1;
+  --grid:#E3E8ED;
+  --shadow:0 1px 2px rgba(17,22,28,.05),0 8px 24px -14px rgba(17,22,28,.18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0E1216;--surface:#161B21;--surface-2:#1D242C;--surface-3:#252E37;
+  --ink:#E9EDF1;--ink-2:#AFB9C5;--ink-3:#7B8693;
+  --rule:#28303A;--rule-2:#38424E;
+  --accent:#E17A66;--accent-2:#7BAECC;
+  --ok:#6FB185;--warn:#D9A153;--crit:#E27564;
+  --ok-bg:#17251C;--warn-bg:#2C2317;--crit-bg:#2E1B18;
+  --grid:#232B34;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.65);
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1216;--surface:#161B21;--surface-2:#1D242C;--surface-3:#252E37;
+  --ink:#E9EDF1;--ink-2:#AFB9C5;--ink-3:#7B8693;
+  --rule:#28303A;--rule-2:#38424E;
+  --accent:#E17A66;--accent-2:#7BAECC;
+  --ok:#6FB185;--warn:#D9A153;--crit:#E27564;
+  --ok-bg:#17251C;--warn-bg:#2C2317;--crit-bg:#2E1B18;
+  --grid:#232B34;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -14px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px 90px}
+h1,h2,h3{font-family:Spectral,Georgia,serif;margin:0;text-wrap:balance}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+a{color:var(--accent-2)}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;border-radius:2px}
+
+/* header */
+header{padding:44px 0 24px;border-bottom:1px solid var(--rule);margin-bottom:26px}
+header h1{font-size:clamp(28px,4.4vw,42px);font-weight:700;letter-spacing:-.022em;line-height:1.06;margin-top:16px}
+header .sub{max-width:660px;margin-top:14px;color:var(--ink-2);font-size:16px}
+.synthetic{display:inline-flex;align-items:center;gap:8px;background:var(--warn-bg);color:var(--warn);
+  border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);padding:5px 11px;font-size:11.5px;
+  font-family:"IBM Plex Mono",monospace;letter-spacing:.07em;text-transform:uppercase;font-weight:600;margin-top:18px}
+
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0}
+.kpi{background:var(--surface);padding:15px 17px 17px}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.15;display:block}
+.kpi .k{font-size:12px;color:var(--ink-3);margin-top:5px;line-height:1.35}
+.kpi .n{font-size:11px;color:var(--ink-3);margin-top:4px;font-family:"IBM Plex Mono",monospace}
+.kpi.hero .v{color:var(--accent)}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--rule);padding:13px 16px;margin-bottom:26px}
+.filters .eyebrow{margin-right:4px}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;padding:5px 11px;border:1px solid var(--rule-2);
+  background:var(--surface-2);color:var(--ink-2);cursor:pointer;letter-spacing:.04em}
+.chip[aria-pressed="true"]{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+:root[data-theme="dark"] .chip[aria-pressed="true"],
+:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#0E1216}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .chip[aria-pressed="true"]{color:#fff}}
+.chip:hover{border-color:var(--accent-2)}
+.fgroup{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-right:14px;border-right:1px solid var(--rule);margin-right:4px}
+.fgroup:last-of-type{border-right:none}
+button.reset{margin-left:auto;background:none;border:1px solid var(--rule-2);color:var(--ink-3);
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;padding:5px 11px;cursor:pointer}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);margin-bottom:26px}
+.phead{padding:17px 20px 14px;border-bottom:1px solid var(--rule)}
+.phead h2{font-size:20px;font-weight:600;letter-spacing:-.012em;line-height:1.2;margin-top:7px}
+.phead p{margin:8px 0 0;font-size:13.5px;color:var(--ink-3);max-width:74ch;line-height:1.5}
+.pbody{padding:20px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:26px}
+
+canvas{display:block;width:100%;height:auto}
+.chartbox{position:relative}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+.legend i{display:inline-block;width:11px;height:11px;margin-right:6px;vertical-align:-1px}
+
+/* tables */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:560px}
+th{text-align:left;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);padding:9px 12px;border-bottom:1px solid var(--rule-2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+tbody tr:hover{background:var(--surface-2)}
+
+.tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;padding:3px 7px;white-space:nowrap}
+.t-ok{background:var(--ok-bg);color:var(--ok)}
+.t-warn{background:var(--warn-bg);color:var(--warn)}
+.t-crit{background:var(--crit-bg);color:var(--crit)}
+
+.bar{height:7px;background:var(--surface-3);position:relative;min-width:54px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent-2)}
+.bar.risk i{background:var(--crit)}
+
+/* frontier control */
+.ctl{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:14px 20px;background:var(--surface-2);border-bottom:1px solid var(--rule)}
+.ctl label{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+input[type=range]{flex:1 1 220px;accent-color:var(--accent);min-width:180px}
+.readout{font-family:"IBM Plex Mono",monospace;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.verdict{background:var(--surface-2);border-left:3px solid var(--accent);padding:15px 18px;margin:0 20px 20px;font-size:14.5px;line-height:1.55}
+.verdict b{color:var(--accent)}
+
+.note{background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent-2);padding:18px 20px;margin-bottom:26px;font-size:14px;line-height:1.6}
+.note .eyebrow{display:block;margin-bottom:8px;color:var(--accent-2)}
+.note p{margin:0 0 11px}
+.note p:last-child{margin:0}
+.note ul{margin:0;padding-left:20px}
+.note li{margin-bottom:6px}
+
+footer{margin-top:40px;padding-top:22px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-3);line-height:1.6}
+@media (max-width:640px){.wrap{padding:0 16px 70px}.pbody{padding:16px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Prototype &middot; Production &amp; quality-system software under FDA Computer Software Assurance</span>
+  <h1>Case Ops Telemetry</h1>
+  <p class="sub">An instrument for the analyst correction step. It measures whether human
+  correction <em>changed the diagnostic answer</em> &mdash; not how many minutes it took &mdash;
+  and uses that to rank which case strata can safely come out of the loop first.</p>
+  <span class="synthetic">Synthetic data &middot; no Heartflow records used</span>
+</header>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="filters" id="filters">
+  <span class="eyebrow">Filter</span>
+  <div class="fgroup" data-dim="detector"><span class="eyebrow">Detector</span></div>
+  <div class="fgroup" data-dim="vendor"><span class="eyebrow">Scanner</span></div>
+  <div class="fgroup" data-dim="stent"><span class="eyebrow">Stent</span></div>
+  <button class="reset" id="reset">Clear all</button>
+</div>
+
+<section class="panel">
+  <div class="phead">
+    <span class="eyebrow">View 01 &middot; the decision view</span>
+    <h2>Automation frontier</h2>
+    <p>Case strata sorted by how often analyst correction moved an FFR value across the 0.80
+    threshold. Automate the safest strata first; the curve shows how much volume you buy at each
+    level of residual risk. This is the argument a PCCP submission needs, and it is computable
+    entirely from records that already exist.</p>
+  </div>
+  <div class="ctl">
+    <label for="tol">Residual risk tolerance</label>
+    <input type="range" id="tol" min="0" max="16" step="0.25" value="8">
+    <span class="readout" id="tolOut">&le; 8.00%</span>
+  </div>
+  <div class="verdict" id="verdict"></div>
+  <div class="pbody" style="padding-top:0">
+    <div class="chartbox"><canvas id="frontier" height="320"></canvas></div>
+    <div class="legend">
+      <span><i style="background:var(--accent-2)"></i>Cumulative volume automatable</span>
+      <span><i style="background:var(--crit)"></i>Residual actionable-correction rate</span>
+      <span><i style="background:var(--accent)"></i>Chosen tolerance</span>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <span class="eyebrow">View 02</span>
+    <h2>Stratum register</h2>
+    <p>Aggregated by case characteristics only. Analyst identity is deliberately absent from the
+    schema &mdash; this instrument characterises case difficulty and cannot be repurposed for
+    individual performance management.</p>
+  </div>
+  <div class="pbody"><div class="tscroll"><table id="strata">
+    <thead><tr>
+      <th>Stratum</th><th class="n">Cases</th><th class="n">Share</th>
+      <th class="n">Actionable</th><th style="width:110px">Rate</th>
+      <th class="n">Median min</th><th class="n">Reject</th><th>Disposition</th>
+    </tr></thead><tbody></tbody>
+  </table></div></div>
+</section>
+
+<div class="grid2">
+  <section class="panel">
+    <div class="phead">
+      <span class="eyebrow">View 03</span>
+      <h2>&Delta;FFR impact</h2>
+      <p>How far correction moved the worst-vessel FFR. Most of the mass sits at zero &mdash; that
+      is the automation opportunity. The red mass is where the human earned the case.</p>
+    </div>
+    <div class="pbody">
+      <div class="chartbox"><canvas id="hist" height="260"></canvas></div>
+      <div class="legend">
+        <span><i style="background:var(--accent-2)"></i>Classification unchanged</span>
+        <span><i style="background:var(--crit)"></i>Crossed 0.80 threshold</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead">
+      <span class="eyebrow">View 04</span>
+      <h2>Effort vs. impact</h2>
+      <p>Analyst minutes plotted against auto-segmentation confidence. Effort is well predicted by
+      confidence; diagnostic impact is not. Cases in the lower-left are paid-for and wasted.</p>
+    </div>
+    <div class="pbody">
+      <div class="chartbox"><canvas id="scatter" height="260"></canvas></div>
+      <div class="legend">
+        <span><i style="background:var(--accent-2);opacity:.5"></i>No classification change</span>
+        <span><i style="background:var(--crit)"></i>Actionable correction</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead">
+      <span class="eyebrow">View 05</span>
+      <h2>Reject-gate forensics</h2>
+      <p>Every rejection is a lost case, a wasted triage, and a clinician who waited. Motion
+      dominates &mdash; and motion is knowable at the scanner, before upload.</p>
+    </div>
+    <div class="pbody"><div class="tscroll"><table id="rejects">
+      <thead><tr><th>Reason</th><th class="n">Cases</th><th style="width:150px">Share</th></tr></thead>
+      <tbody></tbody></table></div>
+      <div id="rejPredict" style="margin-top:18px"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead">
+      <span class="eyebrow">View 06</span>
+      <h2>Drift monitor</h2>
+      <p>Actionable-correction rate by model version. If a new release drives this <em>up</em>, the
+      model got worse in a way throughput metrics will never show.</p>
+    </div>
+    <div class="pbody"><div class="tscroll"><table id="drift">
+      <thead><tr><th>Model</th><th class="n">Cases</th><th class="n">Actionable</th><th style="width:120px">Rate</th><th class="n">Median conf.</th></tr></thead>
+      <tbody></tbody></table></div>
+    </div>
+  </section>
+</div>
+
+<div class="note">
+  <span class="eyebrow">Design constraints this prototype is built to respect</span>
+  <ul>
+    <li><b>Observational only.</b> Nothing here routes a case or alters a result. The moment a tool
+    decides which cases skip human review it becomes device software; this stays on the CSA side of
+    that line deliberately.</li>
+    <li><b>No PHI.</b> The schema carries pseudonymous case surrogates, covariate summaries and edit
+    semantics. No pixel data, no DICOM tags, no accession numbers, no raw mesh geometry.</li>
+    <li><b>No analyst identity.</b> Aggregation is by case stratum. The instrument is structurally
+    incapable of individual performance monitoring, which is what keeps Operations on side.</li>
+    <li><b>Non-blocking by construction.</b> Live emission uses a bounded ring buffer with
+    drop-on-full and a background writer. Telemetry that can stall the clinical tool is a patient
+    safety hazard under a 90-minute turnaround commitment.</li>
+  </ul>
+</div>
+
+<footer>
+  <p>Synthetic corpus of 4,200 cases. Covariate structure derived from published literature and
+  Heartflow's own disclosures &mdash; 26-minute median analyst time, 8&ndash;15% real-world
+  rejection, motion artifact causing ~78% of rejections, automation failure predicted by stents and
+  Agatston &gt;967, FFR threshold 0.80. Generator source in
+  <span class="mono">portal/gen_cases.py</span>.</p>
+  <p>This is a demonstration of an analysis method, not a claim about Heartflow's actual numbers.</p>
+</footer>
+</div>
+
+<script>
+/*__DATA__*/
+</script>
+
+<script>
+const C = {
+  ID:0, DAY:1, VENDOR:2, DET:3, CA:4, HR:5, BMI:6, STENT:7, MOTION:8, CONF:9,
+  REJ:10, REASON:11, EDITS:12, ACTIVE:13, IDLE:14, UNDO:15, SEGS:16,
+  PRE:17, POST:18, CROSSED:19, GREY:20, TAT:21, MODEL:22
+};
+
+const filters = {detector:new Set(), vendor:new Set(), stent:new Set()};
+
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pct = (x,d=1) => (x*100).toFixed(d)+'%';
+const median = a => {if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)];};
+
+function apply(){
+  return CASES.filter(r=>{
+    if(filters.detector.size && !filters.detector.has(r[C.DET])) return false;
+    if(filters.vendor.size && !filters.vendor.has(r[C.VENDOR])) return false;
+    if(filters.stent.size && !filters.stent.has(r[C.STENT]===1?'Yes':'No')) return false;
+    return true;
+  });
+}
+
+/* ---- stratum definition: calcium band x motion band x stent ---- */
+function caBand(v){ return v<100?'CAC<100' : v<400?'CAC 100-400' : v<1000?'CAC 400-1k' : 'CAC>1k'; }
+function moBand(v){ return v<0.6?'motion lo' : v<1.4?'motion md' : 'motion hi'; }
+function stratumOf(r){ return caBand(r[C.CA])+' / '+moBand(r[C.MOTION])+(r[C.STENT]?' / stent':''); }
+
+function buildStrata(rows){
+  const acc = rows.filter(r=>!r[C.REJ]);
+  const m = new Map();
+  for(const r of rows){
+    const k = stratumOf(r);
+    if(!m.has(k)) m.set(k,{k,all:[],acc:[]});
+    const s = m.get(k); s.all.push(r);
+    if(!r[C.REJ]) s.acc.push(r);
+  }
+  const out=[];
+  for(const s of m.values()){
+    if(s.acc.length<12) continue;                    // suppress thin strata
+    const cross = s.acc.reduce((a,r)=>a+r[C.CROSSED],0);
+    out.push({
+      key:s.k, n:s.acc.length, share:s.acc.length/acc.length,
+      cross, rate:cross/s.acc.length,
+      med:median(s.acc.map(r=>r[C.ACTIVE]+r[C.IDLE])),
+      rej:s.all.length? (s.all.length-s.acc.length)/s.all.length : 0
+    });
+  }
+  out.sort((a,b)=>a.rate-b.rate);
+  let cum=0;
+  for(const s of out){ cum+=s.share; s.cum=cum; }
+  return out;
+}
+
+/* ---- KPIs ---- */
+function renderKpis(rows, strata, tol){
+  const acc = rows.filter(r=>!r[C.REJ]);
+  const cross = acc.reduce((a,r)=>a+r[C.CROSSED],0);
+  const elig = strata.filter(s=>s.rate<=tol);
+  const eligShare = elig.reduce((a,s)=>a+s.share,0);
+  const grey = acc.reduce((a,r)=>a+r[C.GREY],0);
+  const k = [
+    ['hero', pct(cross/acc.length,1), 'Actionable correction rate', 'human changed the answer'],
+    ['', pct(1-cross/acc.length,1), 'No classification change', 'candidate volume'],
+    ['', median(acc.map(r=>r[C.ACTIVE]+r[C.IDLE])).toFixed(0)+' min', 'Median analyst time', 'active + idle'],
+    ['', pct((rows.length-acc.length)/rows.length,1), 'Reject rate', 'pre-analysis gate'],
+    ['', pct(grey/acc.length,1), 'Delivered in grey zone', 'FFR 0.75-0.80'],
+    ['', pct(eligShare,0), 'Automatable at tolerance', elig.length+' of '+strata.length+' strata'],
+  ];
+  document.getElementById('kpis').innerHTML = k.map(([cls,v,lab,n])=>
+    `<div class="kpi ${cls}"><span class="v">${v}</span><span class="k">${lab}</span><span class="n">${n}</span></div>`).join('');
+}
+
+/* ---- frontier chart ---- */
+function drawFrontier(strata, tol){
+  const cv = document.getElementById('frontier');
+  const w = cv.clientWidth || 800, h = 320, dpr = window.devicePixelRatio||1;
+  cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+'px';
+  const x = cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,w,h);
+  const L=52,R=52,T=16,B=44, pw=w-L-R, ph=h-T-B;
+  const maxRate = Math.max(0.14, ...strata.map(s=>s.rate));
+
+  x.strokeStyle=css('--grid'); x.lineWidth=1; x.font='11px "IBM Plex Mono", monospace';
+  for(let i=0;i<=5;i++){
+    const yy=T+ph*i/5;
+    x.beginPath(); x.moveTo(L,yy); x.lineTo(L+pw,yy); x.stroke();
+    x.fillStyle=css('--ink-3'); x.textAlign='right';
+    x.fillText(Math.round(100-i*20)+'%', L-9, yy+4);
+    x.textAlign='left';
+    x.fillText((maxRate*100*(1-i/5)).toFixed(1)+'%', L+pw+9, yy+4);
+  }
+
+  // cumulative volume area
+  x.beginPath(); x.moveTo(L,T+ph);
+  strata.forEach((s,i)=>{ const px=L+pw*(i+1)/strata.length; x.lineTo(px, T+ph-ph*s.cum); });
+  x.lineTo(L+pw*1,T+ph); x.closePath();
+  x.fillStyle=css('--accent-2')+'22'; x.fill();
+  x.beginPath();
+  strata.forEach((s,i)=>{ const px=L+pw*(i+1)/strata.length, py=T+ph-ph*s.cum; i?x.lineTo(px,py):x.moveTo(px,py); });
+  x.strokeStyle=css('--accent-2'); x.lineWidth=2; x.stroke();
+
+  // per-stratum rate
+  x.beginPath();
+  strata.forEach((s,i)=>{ const px=L+pw*(i+1)/strata.length, py=T+ph-ph*(s.rate/maxRate); i?x.lineTo(px,py):x.moveTo(px,py); });
+  x.strokeStyle=css('--crit'); x.lineWidth=1.6; x.setLineDash([4,3]); x.stroke(); x.setLineDash([]);
+
+  // tolerance marker
+  const idx = strata.filter(s=>s.rate<=tol).length;
+  if(idx>0 && idx<=strata.length){
+    const px=L+pw*idx/strata.length;
+    x.beginPath(); x.moveTo(px,T); x.lineTo(px,T+ph);
+    x.strokeStyle=css('--accent'); x.lineWidth=2; x.stroke();
+    const cum = strata[idx-1].cum;
+    const py=T+ph-ph*cum;
+    x.beginPath(); x.arc(px,py,4.5,0,7); x.fillStyle=css('--accent'); x.fill();
+  }
+  x.fillStyle=css('--ink-3'); x.textAlign='center';
+  x.fillText('strata ordered by residual risk  →', L+pw/2, h-14);
+}
+
+/* ---- verdict ---- */
+function renderVerdict(strata, tol){
+  const elig = strata.filter(s=>s.rate<=tol);
+  const share = elig.reduce((a,s)=>a+s.share,0);
+  const cases = elig.reduce((a,s)=>a+s.n,0);
+  const resid = cases? elig.reduce((a,s)=>a+s.cross,0)/cases : 0;
+  const annual = Math.round(share*84491*4/1000)*1000;
+  document.getElementById('verdict').innerHTML =
+    `At a residual actionable-correction rate of <b>&le;${pct(tol,2)}</b>, <b>${elig.length}</b> of
+     ${strata.length} strata qualify &mdash; <b>${pct(share,0)}</b> of accepted volume, with a blended
+     residual rate of <b>${pct(resid,2)}</b>. Extrapolated to Q2 run-rate that is roughly
+     <b>${annual.toLocaleString()}</b> cases a year that could route without human correction.`;
+}
+
+/* ---- stratum table ---- */
+function renderStrata(strata, tol){
+  const tb = document.querySelector('#strata tbody');
+  const maxRate = Math.max(...strata.map(s=>s.rate),0.01);
+  tb.innerHTML = strata.map(s=>{
+    const d = s.rate<=tol ? ['t-ok','Automate'] : s.rate<=tol*2 ? ['t-warn','Monitor'] : ['t-crit','Human required'];
+    return `<tr>
+      <td class="mono">${s.key}</td>
+      <td class="n">${s.n}</td>
+      <td class="n">${pct(s.share,1)}</td>
+      <td class="n">${s.cross}</td>
+      <td><div class="bar risk"><i style="width:${(s.rate/maxRate*100).toFixed(1)}%"></i></div>
+          <span class="mono" style="font-size:11px;color:var(--ink-3)">${pct(s.rate,2)}</span></td>
+      <td class="n">${s.med.toFixed(0)}</td>
+      <td class="n">${pct(s.rej,1)}</td>
+      <td><span class="tag ${d[0]}">${d[1]}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---- histogram ---- */
+function drawHist(rows){
+  const acc = rows.filter(r=>!r[C.REJ]);
+  const cv=document.getElementById('hist'); const w=cv.clientWidth||500,h=260,dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr; cv.height=h*dpr; cv.style.height=h+'px';
+  const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,w,h);
+  const L=44,R=12,T=12,B=40,pw=w-L-R,ph=h-T-B;
+  const NB=26, MAXD=0.13;
+  const un=new Array(NB).fill(0), cr=new Array(NB).fill(0);
+  for(const r of acc){
+    const d=Math.min(MAXD-1e-9, Math.abs(r[C.POST]-r[C.PRE]));
+    const b=Math.floor(d/MAXD*NB);
+    (r[C.CROSSED]?cr:un)[b]++;
+  }
+  const mx=Math.max(...un.map((v,i)=>v+cr[i]),1);
+  x.font='11px "IBM Plex Mono", monospace';
+  x.strokeStyle=css('--grid');
+  for(let i=0;i<=4;i++){const yy=T+ph*i/4;x.beginPath();x.moveTo(L,yy);x.lineTo(L+pw,yy);x.stroke();
+    x.fillStyle=css('--ink-3');x.textAlign='right';x.fillText(Math.round(mx*(1-i/4)),L-8,yy+4);}
+  const bw=pw/NB;
+  for(let i=0;i<NB;i++){
+    const tot=un[i]+cr[i]; if(!tot) continue;
+    const bx=L+i*bw, hu=ph*un[i]/mx, hc=ph*cr[i]/mx;
+    x.fillStyle=css('--accent-2'); x.globalAlpha=.62; x.fillRect(bx+1,T+ph-hu,bw-2,hu); x.globalAlpha=1;
+    x.fillStyle=css('--crit'); x.fillRect(bx+1,T+ph-hu-hc,bw-2,hc);
+  }
+  x.fillStyle=css('--ink-3'); x.textAlign='center';
+  for(let i=0;i<=4;i++){ x.fillText((MAXD*i/4).toFixed(2), L+pw*i/4, h-20); }
+  x.fillText('|ΔFFR| induced by analyst correction', L+pw/2, h-5);
+}
+
+/* ---- scatter ---- */
+function drawScatter(rows){
+  const acc=rows.filter(r=>!r[C.REJ]);
+  const cv=document.getElementById('scatter'); const w=cv.clientWidth||500,h=260,dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
+  const x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const L=44,R=12,T=12,B=40,pw=w-L-R,ph=h-T-B;
+  const MAXM=110;
+  x.font='11px "IBM Plex Mono", monospace'; x.strokeStyle=css('--grid');
+  for(let i=0;i<=4;i++){const yy=T+ph*i/4;x.beginPath();x.moveTo(L,yy);x.lineTo(L+pw,yy);x.stroke();
+    x.fillStyle=css('--ink-3');x.textAlign='right';x.fillText(Math.round(MAXM*(1-i/4)),L-8,yy+4);}
+  const step = acc.length>1600 ? 2 : 1;
+  for(let i=0;i<acc.length;i+=step){
+    const r=acc[i];
+    const px=L+pw*Math.max(0,Math.min(1,(r[C.CONF]-0.2)/0.8));
+    const py=T+ph-ph*Math.min(1,(r[C.ACTIVE]+r[C.IDLE])/MAXM);
+    if(r[C.CROSSED]){ x.fillStyle=css('--crit'); x.globalAlpha=.85; x.beginPath(); x.arc(px,py,2.4,0,7); x.fill(); }
+    else { x.fillStyle=css('--accent-2'); x.globalAlpha=.16; x.beginPath(); x.arc(px,py,1.9,0,7); x.fill(); }
+  }
+  x.globalAlpha=1; x.fillStyle=css('--ink-3'); x.textAlign='center';
+  for(let i=0;i<=4;i++){ x.fillText((0.2+0.8*i/4).toFixed(1), L+pw*i/4, h-20); }
+  x.fillText('auto-segmentation confidence  →', L+pw/2, h-5);
+  x.save(); x.translate(12,T+ph/2); x.rotate(-Math.PI/2); x.textAlign='center';
+  x.fillText('analyst minutes', 0, 0); x.restore();
+}
+
+/* ---- rejects ---- */
+function renderRejects(rows){
+  const rej=rows.filter(r=>r[C.REJ]);
+  const m=new Map();
+  for(const r of rej) m.set(r[C.REASON],(m.get(r[C.REASON])||0)+1);
+  const arr=[...m.entries()].sort((a,b)=>b[1]-a[1]);
+  const tot=rej.length||1;
+  document.querySelector('#rejects tbody').innerHTML = arr.map(([k,v])=>
+    `<tr><td class="mono">${k.replace(/_/g,' ')}</td><td class="n">${v}</td>
+     <td><div class="bar risk"><i style="width:${(v/tot*100).toFixed(1)}%"></i></div>
+     <span class="mono" style="font-size:11px;color:var(--ink-3)">${pct(v/tot,1)}</span></td></tr>`).join('')
+     || '<tr><td colspan="3" style="color:var(--ink-3)">No rejections in this filter.</td></tr>';
+
+  const hiMo = rows.filter(r=>r[C.MOTION]>=1.4), loMo = rows.filter(r=>r[C.MOTION]<0.6);
+  const st = rows.filter(r=>r[C.STENT]===1), nost = rows.filter(r=>!r[C.STENT]);
+  const rr = a => a.length? a.filter(r=>r[C.REJ]).length/a.length : 0;
+  document.getElementById('rejPredict').innerHTML =
+    `<div class="tscroll"><table><thead><tr><th>Predictor</th><th class="n">Reject rate</th><th class="n">Lift</th></tr></thead><tbody>
+      <tr><td>Motion score &ge; 1.4</td><td class="n">${pct(rr(hiMo),1)}</td><td class="n">${loMo.length&&rr(loMo)?(rr(hiMo)/rr(loMo)).toFixed(1)+'×':'—'}</td></tr>
+      <tr><td>Motion score &lt; 0.6</td><td class="n">${pct(rr(loMo),1)}</td><td class="n">baseline</td></tr>
+      <tr><td>Stent present</td><td class="n">${pct(rr(st),1)}</td><td class="n">${nost.length&&rr(nost)?(rr(st)/rr(nost)).toFixed(1)+'×':'—'}</td></tr>
+    </tbody></table></div>`;
+}
+
+/* ---- drift ---- */
+function renderDrift(rows){
+  const acc=rows.filter(r=>!r[C.REJ]);
+  const m=new Map();
+  for(const r of acc){ if(!m.has(r[C.MODEL])) m.set(r[C.MODEL],[]); m.get(r[C.MODEL]).push(r); }
+  const arr=[...m.entries()].sort();
+  const rates=arr.map(([,v])=>v.reduce((a,r)=>a+r[C.CROSSED],0)/v.length);
+  const mx=Math.max(...rates,0.01);
+  document.querySelector('#drift tbody').innerHTML = arr.map(([k,v],i)=>{
+    const cross=v.reduce((a,r)=>a+r[C.CROSSED],0);
+    const worse = i>0 && rates[i]>rates[i-1]*1.08;
+    return `<tr><td class="mono">${k}</td><td class="n">${v.length}</td><td class="n">${cross}</td>
+      <td><div class="bar risk"><i style="width:${(rates[i]/mx*100).toFixed(1)}%"></i></div>
+      <span class="mono" style="font-size:11px;color:${worse?'var(--crit)':'var(--ink-3)'}">${pct(rates[i],2)}${worse?' ▲':''}</span></td>
+      <td class="n">${median(v.map(r=>r[C.CONF])).toFixed(3)}</td></tr>`;
+  }).join('');
+}
+
+/* ---- wiring ---- */
+function buildFilterChips(){
+  const dims = {
+    detector:[...new Set(CASES.map(r=>r[C.DET]))].sort(),
+    vendor:[...new Set(CASES.map(r=>r[C.VENDOR]))].sort(),
+    stent:['Yes','No']
+  };
+  for(const [dim,vals] of Object.entries(dims)){
+    const g=document.querySelector(`.fgroup[data-dim="${dim}"]`);
+    for(const v of vals){
+      const b=document.createElement('button');
+      b.className='chip'; b.textContent=v; b.setAttribute('aria-pressed','false');
+      b.onclick=()=>{
+        const s=filters[dim];
+        if(s.has(v)){s.delete(v);b.setAttribute('aria-pressed','false');}
+        else {s.add(v);b.setAttribute('aria-pressed','true');}
+        render();
+      };
+      g.appendChild(b);
+    }
+  }
+}
+
+function render(){
+  const tol = parseFloat(document.getElementById('tol').value)/100;
+  document.getElementById('tolOut').textContent = '≤ '+(tol*100).toFixed(2)+'%';
+  const rows = apply();
+  const strata = buildStrata(rows);
+  renderKpis(rows, strata, tol);
+  renderVerdict(strata, tol);
+  drawFrontier(strata, tol);
+  renderStrata(strata, tol);
+  drawHist(rows);
+  drawScatter(rows);
+  renderRejects(rows);
+  renderDrift(rows);
+}
+
+document.getElementById('tol').addEventListener('input', render);
+document.getElementById('reset').addEventListener('click', ()=>{
+  for(const k in filters) filters[k].clear();
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false'));
+  render();
+});
+let rt; window.addEventListener('resize', ()=>{clearTimeout(rt);rt=setTimeout(render,140);});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+buildFilterChips();
+render();
+</script>

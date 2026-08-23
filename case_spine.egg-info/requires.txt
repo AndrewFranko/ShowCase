@@ -1,0 +1,12 @@
+duckdb>=1.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+[dev]
+pytest>=8.0
+httpx>=0.27
+
+[prod]
+dagster>=1.7
+dagster-webserver>=1.7
+redshift-connector>=2.1
