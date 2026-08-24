@@ -145,6 +145,37 @@ jobs:
           name: sbom-${{ github.sha }}
           path: sbom-python.json
 
+  caseops:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: caseops
+          POSTGRES_PASSWORD: caseops
+          POSTGRES_DB: caseops
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U caseops"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,caseops]"
+      - name: Bootstrap, ingest, analyse
+        run: |
+          python -m caseops.ingest bootstrap
+          python -m caseops.ingest meshes
+          python -m caseops.ingest tick
+      - name: Test
+        run: pytest tests/test_caseops.py -q
+
   terraform:
     runs-on: ubuntu-latest
     steps:

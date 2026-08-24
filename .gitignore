@@ -7,6 +7,7 @@
 data/
 evidence/
 deploy/server.log
+caseops/server.log
 deploy/.deploy-state.json
 
 # terraform local state (documented trade-off in infra/aws-free-tier/main.tf)

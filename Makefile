@@ -93,3 +93,18 @@ all: seed check test
 
 clean:
 	rm -rf data/raw data/spine.duckdb .pytest_cache
+
+caseops-up:
+	docker compose -f caseops/docker-compose.yml up -d --wait
+	$(PY) -m caseops.ingest bootstrap
+	$(PY) -m caseops.ingest meshes
+
+caseops-serve:
+	$(PY) -m uvicorn caseops.app:app --port 8095
+
+caseops-tick:
+	$(PY) -m caseops.ingest tick
+	$(PY) -m caseops.ingest meshes
+
+caseops-test:
+	$(PY) -m pytest tests/test_caseops.py -q

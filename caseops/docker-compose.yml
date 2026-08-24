@@ -1,0 +1,19 @@
+# CaseOps backing services. The app itself runs on the host (port 8095);
+# only the database is containerized:  docker compose -f caseops/docker-compose.yml up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: caseops-postgres
+    environment:
+      POSTGRES_USER: caseops
+      POSTGRES_PASSWORD: caseops   # local dev only; synthetic data
+      POSTGRES_DB: caseops
+    ports: ["5434:5432"]
+    volumes: [caseops-pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U caseops"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  caseops-pgdata:

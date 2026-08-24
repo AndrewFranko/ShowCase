@@ -14,6 +14,8 @@ dev = ["pytest>=8.0", "httpx>=0.27", "anyio>=4.0", "pytest-anyio", "mcp>=2.0", "
 # Not installed locally: the production path runs the same SQL through Dagster
 # against Redshift. Kept separate so `pip install -e .` stays fast.
 prod = ["dagster>=1.7", "dagster-webserver>=1.7", "redshift-connector>=2.1"]
+# CaseOps: the Postgres-backed operational system upstream of the spine
+caseops = ["psycopg[binary]>=3.2", "numpy>=1.26"]
 
 [project.scripts]
 spine-generate = "spine.generate:main"
