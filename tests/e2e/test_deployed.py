@@ -642,3 +642,15 @@ def test_f2_sealed_record_reachable_and_verified_posthoc(deployed):
     assert "verified" in body
     assert "\u2192" in body or "->" in body, "as-sealed audit trail missing"
     assert "#investigation=" in deployed.url, "deep link not set (F9)"
+
+
+def test_charts_answer_hover_with_exact_values(deployed):
+    """Interaction layer: hovering a chart must surface the underlying numbers
+    in the shared tooltip, not leave the canvas a mute picture."""
+    canvas = deployed.locator("#vizEffort")
+    box = canvas.bounding_box()
+    canvas.hover(position={"x": box["width"] * 0.4, "y": box["height"] * 0.5})
+    tip = deployed.locator("#tip")
+    expect(tip).to_be_visible()
+    text = tip.inner_text().lower()
+    assert "cases" in text and "changed the answer" in text, text

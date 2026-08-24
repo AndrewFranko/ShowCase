@@ -140,6 +140,17 @@ select,.btn{font:12.5px "IBM Plex Mono",monospace;padding:6px 11px;background:va
 .note .eyebrow{display:block;margin-bottom:8px;color:var(--accent-2)}
 footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
   font-size:12.5px;color:var(--ink-3);line-height:1.6}
+#tip{position:fixed;z-index:60;pointer-events:none;display:none;max-width:300px;
+  background:var(--surface);border:1px solid var(--rule-2);box-shadow:var(--shadow);
+  padding:8px 11px;font:11.5px "IBM Plex Mono",monospace;line-height:1.6;color:var(--ink)}
+#tip .t{display:block;font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
+#tip b{color:var(--accent)}
+canvas.hit{cursor:crosshair}
+@media (prefers-reduced-motion:no-preference){
+  .lens.on{animation:lensIn .16s ease-out}
+  @keyframes lensIn{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}
+}
 @media(max-width:640px){.wrap{padding:0 15px 70px}.trace .hop{grid-template-columns:1fr;gap:2px}
   .hero{padding:14px 16px}.fc-body{padding:12px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -591,6 +602,45 @@ function grid(x,L,T,pw,ph,rows,fmt){
   }
 }
 
+/* ------------------------------------------------ chart interaction layer
+   Draw functions register hit regions (rects {x,y,w,h} or points {x,y,r}) in
+   CSS-pixel space; one fixed #tip element follows the pointer. Regions with a
+   `go` hash navigate on click and show a pointer cursor. */
+const tipEl=document.createElement('div');tipEl.id='tip';document.body.appendChild(tipEl);
+const HITMAP={};
+function setHits(id,regions){
+  HITMAP[id]=regions;
+  const cv=$(id);if(!cv||cv._hitBound)return;cv._hitBound=true;cv.classList.add('hit');
+  const find=e=>{
+    let best=null,bd=1e9;
+    for(const r of (HITMAP[id]||[])){
+      let d;
+      if(r.w!=null){
+        if(e.offsetX<r.x||e.offsetX>r.x+r.w||e.offsetY<r.y||e.offsetY>r.y+r.h)continue;
+        d=Math.abs(e.offsetX-(r.x+r.w/2));
+      }else{
+        d=Math.hypot(e.offsetX-r.x,e.offsetY-r.y);
+        if(d>(r.r||14))continue;
+      }
+      if(d<bd){bd=d;best=r;}
+    }
+    return best;
+  };
+  cv.addEventListener('mousemove',e=>{
+    const r=find(e);
+    if(!r){tipEl.style.display='none';cv.style.cursor='crosshair';return;}
+    cv.style.cursor=r.go?'pointer':'crosshair';
+    tipEl.innerHTML=r.tip;tipEl.style.display='block';
+    let px=e.clientX+14;
+    if(px+tipEl.offsetWidth>innerWidth-8)px=e.clientX-tipEl.offsetWidth-14;
+    let py=e.clientY+12;
+    if(py+tipEl.offsetHeight>innerHeight-8)py=e.clientY-tipEl.offsetHeight-12;
+    tipEl.style.left=Math.max(4,px)+'px';tipEl.style.top=Math.max(4,py)+'px';
+  });
+  cv.addEventListener('mouseleave',()=>{tipEl.style.display='none';});
+  cv.addEventListener('click',e=>{const r=find(e);if(r&&r.go)location.hash=r.go;});
+}
+
 const LENSES=[['findings','Findings'],['ops','Operations'],['quality','Quality'],
               ['eng','Engineering'],['field','Field'],['evidence','Evidence'],
               ['actions','Actions'],['platform','Platform']];
@@ -649,7 +699,7 @@ function drawEffort(){
   const L=56,R=16,T=20,B=48,pw=w-L-R,ph=h-T-B,d=TEL.by_minutes;
   const mx=Math.max(...d.map(b=>b.hours))*1.1;
   grid(x,L,T,pw,ph,4,f=>Math.round(mx*f)+'h');
-  const bw=pw/d.length;
+  const bw=pw/d.length,effortHits=[];
   d.forEach((b,i)=>{
     const bx=L+i*bw,act=b.hours*b.actionable_rate,con=b.hours-act;
     const hc=ph*con/mx,ha=ph*act/mx;
@@ -657,7 +707,12 @@ function drawEffort(){
     x.globalAlpha=1;x.fillStyle=css('--flow-lo');x.fillRect(bx+3,T+ph-hc-ha,bw-6,ha);
     x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(b.min_bucket,bx+bw/2,h-28);
     x.fillStyle=css('--crit');x.fillText(pct(b.actionable_rate,0),bx+bw/2,h-13);
+    const band=i===d.length-1?`&ge;${b.min_bucket} min`:`${b.min_bucket}&ndash;${b.min_bucket+10} min`;
+    effortHits.push({x:bx+1,y:T,w:bw-2,h:ph,go:'#lens=ops',
+      tip:`<span class="t">${band}</span>${num(b.cases)} cases &middot; ${b.hours.toFixed(0)} h`+
+          `<br>changed the answer: <b>${pct(b.actionable_rate,1)}</b> (${b.actionable} case${b.actionable===1?'':'s'})`});
   });
+  setHits('vizEffort',effortHits);
   x.fillStyle=css('--ink-3');x.textAlign='center';
   x.fillText('analyst minutes per case  ->    red % = share that changed the answer',L+pw/2,T-6);
   const f=d[0],long=d.filter(b=>b.min_bucket>=60);
@@ -674,12 +729,17 @@ function drawDelta(){
   const L=56,R=16,T=14,B=42,pw=w-L-R,ph=h-T-B;
   const mx=Math.max(...HIST.map(b=>b.unchanged+b.crossed))*1.05;
   grid(x,L,T,pw,ph,4,f=>num(mx*f));
-  const bw=pw/HIST.length;
+  const bw=pw/HIST.length,step=0.13/HIST.length,deltaHits=[];
   HIST.forEach((b,i)=>{
     const bx=L+i*bw,hu=ph*b.unchanged/mx,hc=ph*b.crossed/mx;
     x.globalAlpha=.8;x.fillStyle=css('--flow-hi');x.fillRect(bx+1,T+ph-hu,bw-2,hu);
     x.globalAlpha=1;x.fillStyle=css('--flow-lo');x.fillRect(bx+1,T+ph-hu-hc,bw-2,hc);
+    deltaHits.push({x:bx,y:T,w:bw,h:ph,
+      tip:`<span class="t">|&Delta;FFR| ${(i*step).toFixed(3)}&ndash;${((i+1)*step).toFixed(3)}</span>`+
+          `${num(b.unchanged+b.crossed)} corrections`+
+          `<br>crossed 0.80: <b>${num(b.crossed)}</b> &middot; unchanged: ${num(b.unchanged)}`});
   });
+  setHits('vizDelta',deltaHits);
   x.fillStyle=css('--ink-3');x.textAlign='center';
   for(let i=0;i<=4;i++)x.fillText((0.13*i/4).toFixed(3),L+pw*i/4,h-24);
   x.fillText('|delta FFR| produced by the correction  ->',L+pw/2,h-8);
@@ -702,10 +762,16 @@ function drawRelease(){
   const xf=i=>L+(vers.length===1?pw/2:pw*i/(vers.length-1));
   vers.forEach((v,i)=>{x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(v,xf(i),h-20)});
 
+  const relHits=[];
   makes.forEach(m=>{
     const pts=vers.map((v,i)=>{
       const r=REL.find(z=>z.scanner_make===m&&z.model_version===v);
       return r?{x:xf(i),y:T+ph-ph*val(r)/mx,r}:null;}).filter(Boolean);
+    pts.forEach(p=>relHits.push({x:p.x,y:p.y,r:13,go:'#release='+p.r.model_version,
+      tip:`<span class="t">${m} &middot; ${p.r.model_version}</span>`+
+          `standardised rate <b>${pct(val(p.r),2)}</b> &middot; n=${num(p.r.accepted_cases)}`+
+          `<br>lift ${p.r.lift_vs_first_release.toFixed(2)}x &middot; p=${p.r.p_value.toFixed(4)}`+
+          `<br><span class="tag ${p.r.signal==='regression'?'crit':'ok'}">${p.r.signal}</span>`}));
     if(pts.length<2)return;
     const col=css(colOf[m]),hot=pts.some(p=>p.r.signal==='regression');
     x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));
@@ -719,6 +785,7 @@ function drawRelease(){
     x.fillStyle=col;x.textAlign='left';x.font='600 11.5px "IBM Plex Sans", sans-serif';
     x.fillText(m,L+pw+10,last.y+4);x.font='11px "IBM Plex Mono", monospace';
   });
+  setHits('vizRelease',relHits);
   const reg=REL.find(r=>r.signal==='regression');
   $('footRelease').innerHTML=reg
     ?`<b>${reg.model_version} on ${reg.scanner_make}</b>: <b>${pct(val(reg),2)}</b>,
@@ -746,6 +813,11 @@ function drawDetector(){
     x.strokeStyle=css('--ink-3');x.lineWidth=1.4;x.globalAlpha=.55;x.setLineDash([4,3]);x.stroke();
     x.setLineDash([]);x.globalAlpha=1;
   }
+  const detHits=[];
+  if(DET.control&&DET.control.series)DET.control.series.forEach(p=>detHits.push({
+    x:xf(p.day_bucket),y:yf(p.median_tpv),r:10,
+    tip:`<span class="t">control site &middot; day ${p.day_bucket}</span>`+
+        `median TPV <b>${num(p.median_tpv)}</b> mm&sup3; &middot; n=${p.n} &middot; never migrated`}));
   DET.migrated.forEach(s=>{
     const sw=s.detector_switch_day;
     x.beginPath();x.moveTo(xf(sw),T);x.lineTo(xf(sw),T+ph);
@@ -756,9 +828,14 @@ function drawDetector(){
       if(seg.length<2)return;
       x.beginPath();seg.forEach((p,i)=>{const px=xf(p.day_bucket),py=yf(p.median_tpv);i?x.lineTo(px,py):x.moveTo(px,py)});
       x.strokeStyle=css(tok);x.lineWidth=2.4;x.stroke();
-      seg.forEach(p=>{x.beginPath();x.arc(xf(p.day_bucket),yf(p.median_tpv),2.6,0,7);x.fillStyle=css(tok);x.fill()});
+      seg.forEach(p=>{x.beginPath();x.arc(xf(p.day_bucket),yf(p.median_tpv),2.6,0,7);x.fillStyle=css(tok);x.fill();
+        detHits.push({x:xf(p.day_bucket),y:yf(p.median_tpv),r:10,go:'#site='+s.site_id,
+          tip:`<span class="t">${s.site_name} &middot; day ${p.day_bucket}</span>`+
+              `${det} &middot; median TPV <b>${num(p.median_tpv)}</b> mm&sup3; &middot; n=${p.n}`+
+              `<br>detector swap at day ${sw}`});});
     });
   });
+  setHits('vizDetector',detHits);
   x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText('day  ->',L+pw/2,h-8);
   x.save();x.translate(16,T+ph/2);x.rotate(-Math.PI/2);x.textAlign='center';
   x.fillText('median total plaque volume (mm3)',0,0);x.restore();
@@ -779,9 +856,15 @@ function drawDisparity(){
   for(let i=0;i<=4;i++){const px=L+pw*i/4;
     x.beginPath();x.moveTo(px,T);x.lineTo(px,T+ph);x.stroke();
     x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(pct(mx*i/4,0),px,h-22)}
+  const dispHits=[];
   arms.forEach((a,i)=>{
     const y=T+rowH*(i+.5);
     const col=a.escalate?css('--crit'):a.fdr_significant?css('--warn'):css('--ink-3');
+    dispHits.push({x:L+pw*a.rate/mx,y,r:Math.max(10,rowH/2),go:'#lens=quality',
+      tip:`<span class="t">${a.axis} &middot; ${a.level}</span>`+
+          `rate <b>${pct(a.rate,2)}</b> &middot; n=${num(a.n)}`+
+          `<br>95% CI ${pct(a.ci_low,1)}&ndash;${pct(a.ci_high,1)} &middot; ${a.disparity_vs_best.toFixed(2)}x vs best`+
+          `<br><span class="tag ${a.escalate?'crit':a.fdr_significant?'warn':'info'}">${a.escalate?'escalate':a.fdr_significant?'significant only':'no material difference'}</span>`});
     x.strokeStyle=col;x.lineWidth=1.7;x.globalAlpha=.75;
     x.beginPath();x.moveTo(L+pw*a.ci_low/mx,y);x.lineTo(L+pw*a.ci_high/mx,y);x.stroke();x.globalAlpha=1;
     x.beginPath();x.arc(L+pw*a.rate/mx,y,a.escalate?5:3.4,0,7);x.fillStyle=col;x.fill();
@@ -790,6 +873,7 @@ function drawDisparity(){
     x.fillStyle=css('--ink-3');x.textAlign='left';
     x.fillText(a.axis.replace('_band','').replace('_at_scan','').slice(0,13),6,y+3.5);
   });
+  setHits('vizDisparity',dispHits);
   x.fillStyle=css('--ink-3');x.textAlign='center';
   x.fillText('actionable-correction rate  ->',L+pw/2,h-8);
   const esc=DISP.escalations.length,sig=arms.filter(a=>a.fdr_significant&&!a.escalate).length;
@@ -845,7 +929,13 @@ function drawConfidence(){
   x.strokeStyle=css('--accent-2');x.lineWidth=2.6;x.stroke();
   x.beginPath();d.forEach((p,i)=>{const y=T+ph-ph*p.actionable_rate/mxr;i?x.lineTo(xf(i),y):x.moveTo(xf(i),y)});
   x.strokeStyle=css('--crit');x.lineWidth=2.6;x.setLineDash([5,3]);x.stroke();x.setLineDash([]);
-  d.forEach((p,i)=>{x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(p.confidence.toFixed(1),xf(i),h-22)});
+  const confHits=[];
+  d.forEach((p,i)=>{x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText(p.confidence.toFixed(1),xf(i),h-22);
+    confHits.push({x:xf(i)-(pw/d.length)/2,y:T,w:pw/d.length,h:ph,
+      tip:`<span class="t">confidence ${p.confidence.toFixed(1)}</span>`+
+          `${num(p.cases)} cases &middot; median <b>${p.median_min.toFixed(0)} min</b>`+
+          `<br>actionable rate <b>${pct(p.actionable_rate,1)}</b>`});});
+  setHits('vizConfidence',confHits);
   x.textAlign='left';x.fillStyle=css('--crit');
   for(let i=0;i<=4;i++)x.fillText(pct(mxr*(1-i/4),0),L+pw+8,T+ph*i/4+4);
   x.fillStyle=css('--ink-3');x.textAlign='center';
@@ -886,6 +976,13 @@ function drawFrontier(tol){
   x.strokeStyle=css('--accent-2');x.lineWidth=2.6;x.stroke();
   x.beginPath();STRATA.forEach((s,i)=>{const px=L+pw*(i+1)/STRATA.length,py=T+ph-ph*(s.actionable_correction_rate/mr);i?x.lineTo(px,py):x.moveTo(px,py)});
   x.strokeStyle=css('--crit');x.lineWidth=1.7;x.setLineDash([4,3]);x.stroke();x.setLineDash([]);
+  const frontHits=STRATA.map((st,i)=>({
+    x:L+pw*i/STRATA.length,y:T,w:pw/STRATA.length,h:ph,
+    tip:`<span class="t">${st.stratum}</span>`+
+        `${num(st.accepted_cases)} cases &middot; rate <b>${pct(st.actionable_correction_rate,2)}</b>`+
+        `<br>cumulative volume ${pct(st.cumulative_share,0)} &middot; ${st.median_analyst_min.toFixed(0)} min median`+
+        `<br>${st.actionable_correction_rate<=tol?'<span class="tag ok">within tolerance</span>':'<span class="tag crit">above tolerance</span>'}`}));
+  setHits('vizFrontier',frontHits);
   const el=STRATA.filter(s=>s.actionable_correction_rate<=tol).length;
   if(el){const px=L+pw*el/STRATA.length;
     x.beginPath();x.moveTo(px,T);x.lineTo(px,T+ph);x.strokeStyle=css('--accent');x.lineWidth=2.6;x.stroke();
@@ -1468,7 +1565,11 @@ $('verifyBtn').onclick=async()=>{
     ${same?'produced the identical manifest hash':'produced DIFFERENT hashes'}
     <span class="mono" style="font-size:12px">${a.manifest_sha256.slice(0,16)}...</span></div>`;
 };
-let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(redraw,150)});
+let rt;const queueRedraw=()=>{clearTimeout(rt);rt=setTimeout(redraw,150)};
+addEventListener('resize',queueRedraw);
+// window 'resize' misses container-driven width changes (embedded panes, split
+// views); observe the layout root so charts and their hit regions never go stale.
+new ResizeObserver(queueRedraw).observe(document.querySelector('.wrap'));
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redraw);
 
 (async()=>{
