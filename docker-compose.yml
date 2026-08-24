@@ -24,6 +24,10 @@ services:
       # Placeholder for the real deployment: swapping this for a Redshift DSN
       # makes the runtime stateless and the baked warehouse unnecessary.
       SPINE_DSN: "duckdb:///srv/data/spine.duckdb"
+      # Optional grounded-LLM fallback for /api/ask (spine/llm.py). Empty =
+      # feature off, pure deterministic router. Passed through from the host
+      # shell, never written into this file.
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
     read_only: true
     volumes:
       # The one declared write surface: action-layer workflow state and signed

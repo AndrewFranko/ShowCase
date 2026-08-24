@@ -947,3 +947,79 @@ def test_cube_dimensions_exist_on_the_spine(con):
     for dim in cube["dimensions"]:
         assert dim["sql"].lower() in cols, (
             f"Cube dimension {dim['name']!r} maps to missing column {dim['sql']!r}")
+
+
+# --------------------------------------------------------------------------- llm fallback
+# The optional LLM layer (spine/llm.py) must change NOTHING unless a key is in
+# the environment, and even then only answer questions the deterministic router
+# refuses, grounded solely on metric-layer aggregates.
+from spine import llm as llm_mod  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_llm_key(monkeypatch):
+    """A developer's own ANTHROPIC_API_KEY must never turn the fast suite into
+    a networked suite. Tests that want the fallback set a fake key themselves."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+
+
+def test_ask_without_key_is_purely_deterministic(client):
+    body = client.get("/api/ask", params={"q": "tell me a story about the moon"}).json()
+    assert "error" in body and "configured" not in body["error"]
+    assert "try" in body
+
+
+def test_ask_llm_fallback_answers_with_honest_provenance(client, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-fake-for-test")
+
+    class _Resp:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self):
+            return json.dumps({
+                "model": "claude-haiku-4-5-20251001",
+                "content": [{"type": "text", "text": "Grounded test answer."}],
+            }).encode()
+
+    captured = {}
+    def _fake_urlopen(req, timeout=None):
+        captured["body"] = json.loads(req.data.decode())
+        return _Resp()
+    monkeypatch.setattr(llm_mod.urllib.request, "urlopen", _fake_urlopen)
+
+    body = client.get("/api/ask", params={"q": "zzz nothing routable zzz"}).json()
+    assert body["answer"] == "Grounded test answer."
+    assert "llm" in body["provenance"]["router"]
+    assert body["provenance"]["model"].startswith("claude-")
+    # deterministic intents still answer first: no LLM call for a routable question
+    captured.clear()
+    routed = client.get("/api/ask", params={"q": "what share of studies are rejected?"}).json()
+    assert routed["provenance"]["resolved_intent"] == "reject_rate"
+    assert not captured, "a routable question must never reach the LLM"
+
+
+def test_ask_llm_failure_falls_back_to_refusal(client, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-fake-for-test")
+    def _boom(req, timeout=None):
+        raise llm_mod.urllib.error.URLError("no network in tests")
+    monkeypatch.setattr(llm_mod.urllib.request, "urlopen", _boom)
+    body = client.get("/api/ask", params={"q": "zzz nothing routable zzz"}).json()
+    assert "error" in body and "did not answer" in body["error"]
+
+
+def test_llm_grounding_digest_has_no_case_rows_or_identity(con):
+    # Keys are what leak data; prose may legitimately say the word "patients".
+    def keys_of(node):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                yield k.lower()
+                yield from keys_of(v)
+        elif isinstance(node, list):
+            for item in node:
+                yield from keys_of(item)
+    seen = set(keys_of(llm_mod.grounding_digest(con)))
+    for forbidden in ("case_id", "analyst_id", "analyst_name", "patient_id", "mrn"):
+        assert forbidden not in seen, f"grounding digest leaks key {forbidden}"

@@ -26,6 +26,11 @@ services:
     container_name: case-spine
     restart: unless-stopped
     read_only: true
+    # Optional secrets (LLM key for /api/ask fallback) land here via
+    # case-spine-set-llm-key, run over SSM - never via terraform or user_data,
+    # both of which are readable through the EC2 API.
+    env_file:
+      - /opt/case-spine/.env
     volumes:
       - case-spine-state:/state
     tmpfs:
@@ -86,9 +91,34 @@ cat > /opt/case-spine/Caddyfile <<'CADDY'
 CADDY
 %{ endif ~}
 
+# Empty by default so compose's env_file reference resolves; populated only by
+# case-spine-set-llm-key below.
+touch /opt/case-spine/.env
+chmod 600 /opt/case-spine/.env
+
 cd /opt/case-spine
 docker compose pull
 docker compose up -d
+
+# ------------------------------------------------------- optional LLM key (run via SSM)
+cat > /usr/local/bin/case-spine-set-llm-key <<'KEY'
+#!/bin/bash
+# Enable the grounded-LLM fallback on /api/ask:
+#   sudo case-spine-set-llm-key sk-ant-...
+# The key lives only in this root-owned 600 file and the container env - it is
+# never in terraform state, user_data, or the repo. Run with no argument to
+# disable the feature again.
+set -euo pipefail
+if [ $# -ge 1 ]; then
+  printf 'ANTHROPIC_API_KEY=%s\n' "$1" > /opt/case-spine/.env
+else
+  : > /opt/case-spine/.env
+fi
+chmod 600 /opt/case-spine/.env
+cd /opt/case-spine
+docker compose up -d --force-recreate api
+KEY
+chmod +x /usr/local/bin/case-spine-set-llm-key
 
 # ---------------------------------------------------------------- update helper (run via SSM)
 cat > /usr/local/bin/case-spine-update <<'UPD'

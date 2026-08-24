@@ -530,10 +530,12 @@ def site_card(site_id: int, con: Con):
 def ask_endpoint(con: Con, q: str = Query(..., min_length=1, max_length=300)):
     """Ask the spine a question in plain language.
 
-    Deterministic keyword routing over the canonical metric layer - NOT an external
-    LLM. Same question, same answer, forever, with provenance. Free-form reasoning
-    belongs on the MCP server with a real model attached; a hosted LLM wired into
-    the portal would move data across the platform's one security boundary.
+    Deterministic keyword routing over the canonical metric layer answers first -
+    same question, same answer, forever, with provenance. Questions the router
+    refuses fall back to a grounded LLM (spine/llm.py) ONLY when an API key is
+    present in the environment; the model sees a digest of the same governed
+    aggregates this API serves, never raw rows or SQL, and its answers carry
+    provenance naming the model. No key configured = pure deterministic router.
     """
     from spine.ask import ask
     return ask(con, q)

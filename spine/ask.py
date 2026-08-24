@@ -236,9 +236,18 @@ def ask(con, question: str) -> dict[str, Any]:
                          "model attached."),
             }
             return result
+    # Optional LLM fallback: only for questions the router refuses, only when a
+    # key is in the environment, always grounded on this same metric layer.
+    from spine import llm
+    if llm.available():
+        result = llm.answer(con, q)
+        if result is not None:
+            return result
     return {
         "question": q,
         "error": ("No intent matched. This router deliberately refuses to guess - "
-                  "an approximate answer in a regulated portal is worse than none."),
+                  "an approximate answer in a regulated portal is worse than none."
+                  + (" (LLM fallback was configured but did not answer.)"
+                     if llm.available() else "")),
         "try": VOCABULARY,
     }
