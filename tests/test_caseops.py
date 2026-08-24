@@ -268,3 +268,29 @@ def test_fda_refresh_fails_soft_without_network(client, monkeypatch):
     assert r.status_code == 200
     body = r.json()
     assert body["updated"] == 0 and body["errors"] == body["models"] > 0
+
+
+# ------------------------------------------------------------- per-device / per-clinic stats
+def test_device_detail_carries_weekly_corrections_series(client):
+    stats = client.get("/api/devices/stats").json()
+    con = connect()
+    cur = con.cursor()
+    cur.execute("""SELECT device_id FROM ticket WHERE status='resolved'
+                   GROUP BY 1 ORDER BY count(*) DESC LIMIT 1""")
+    dev = cur.fetchone()["device_id"]
+    con.close()
+    d = client.get(f"/api/devices/{dev}").json()
+    assert len(d["weekly"]) >= 4
+    row = d["weekly"][0]
+    assert set(row) >= {"week", "corrections", "minutes", "mean_change_pct"}
+    assert sum(r["corrections"] for r in d["weekly"]) > 0
+
+
+def test_hospitals_carry_clinic_statistics(client):
+    hs = client.get("/api/hospitals").json()
+    busy = max(hs, key=lambda h: h["resolved_tickets"])
+    assert busy["resolved_tickets"] > 50
+    assert busy["median_min"] is not None and 5 <= float(busy["median_min"]) <= 120
+    assert busy["mean_change_pct"] is None or 0 < float(busy["mean_change_pct"]) <= 100
+    detail = client.get(f"/api/hospitals/{busy['hospital_id']}").json()
+    assert len(detail["weekly"]) >= 4

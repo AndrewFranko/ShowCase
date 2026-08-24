@@ -75,11 +75,16 @@ def hospitals(con: Con):
     return q(con, """
         SELECT h.*, count(DISTINCT d.device_id) AS devices,
                count(DISTINCT t.ticket_id) FILTER (WHERE t.status <> 'resolved') AS open_tickets,
+               count(DISTINCT t.ticket_id) FILTER (WHERE t.status = 'resolved')  AS resolved_tickets,
+               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY t.actual_min)::numeric, 0)
+                                                                                 AS median_min,
+               round(avg(g.blocks_changed_pct)::numeric, 1)                      AS mean_change_pct,
                count(DISTINCT i.incident_id) FILTER (WHERE i.status = 'open')    AS open_incidents,
                max(c.occurred_at)                                                AS last_change
         FROM hospital h
         LEFT JOIN device d USING (hospital_id)
         LEFT JOIN ticket t USING (hospital_id)
+        LEFT JOIN geometry_delta g ON g.ticket_id = t.ticket_id
         LEFT JOIN incident i ON i.hospital_id = h.hospital_id
         LEFT JOIN hospital_change c ON c.hospital_id = h.hospital_id
         GROUP BY h.hospital_id ORDER BY open_tickets DESC, h.name""")
@@ -97,6 +102,16 @@ def hospital_detail(hospital_id: int, con: Con):
                              ORDER BY occurred_at DESC LIMIT 12""", [hospital_id])
     h["incidents"] = q(con, """SELECT * FROM incident WHERE hospital_id = %s
                                ORDER BY reported_at DESC LIMIT 12""", [hospital_id])
+    h["weekly"] = q(con, """
+        SELECT date_trunc('week', t.resolved_at)::date AS week,
+               count(*)                                AS corrections,
+               sum(t.actual_min)::int                  AS minutes,
+               round(avg(g.blocks_changed_pct)::numeric, 1) AS mean_change_pct
+        FROM ticket t
+        LEFT JOIN geometry_delta g USING (ticket_id)
+        WHERE t.hospital_id = %s AND t.status = 'resolved'
+        GROUP BY 1 ORDER BY 1""",
+                    [hospital_id])
     h["open_tickets"] = q(con, """
         SELECT t.*, a.name AS analyst FROM ticket t
         LEFT JOIN analyst a USING (analyst_id)
@@ -368,6 +383,16 @@ def device_detail(device_id: int, con: Con):
                                WHERE device_id = %s OR (hospital_id = %s AND device_id IS NULL)
                                ORDER BY reported_at DESC LIMIT 8""",
                        [device_id, d["hospital_id"]])
+    d["weekly"] = q(con, """
+        SELECT date_trunc('week', t.resolved_at)::date AS week,
+               count(*)                                AS corrections,
+               sum(t.actual_min)::int                  AS minutes,
+               round(avg(g.blocks_changed_pct)::numeric, 1) AS mean_change_pct
+        FROM ticket t
+        LEFT JOIN geometry_delta g USING (ticket_id)
+        WHERE t.device_id = %s AND t.status = 'resolved'
+        GROUP BY 1 ORDER BY 1""",
+                    [device_id])
     fda_rows = q(con, "SELECT payload, fetched_at FROM fda_signal WHERE make = %s AND model = %s",
                  [d["make"], d["model"]])
     d["fda_signal"] = fda_rows[0]["payload"] if fda_rows else None
