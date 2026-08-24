@@ -35,8 +35,8 @@ provider "aws" {
       Owner       = var.owner
       // Production/QMS software under FDA Computer Software Assurance.
       // NOT device software. See validation/csa-validation-plan.md.
-      Regulated   = "csa-production-quality-system"
-      DataClass   = "no-phi"
+      Regulated = "csa-production-quality-system"
+      DataClass = "no-phi"
     }
   }
 }
@@ -71,8 +71,7 @@ resource "aws_iam_role" "app" {
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${replace(data.aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" =
-            "system:serviceaccount:${var.namespace}:case-spine"
+          "${replace(data.aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:${var.namespace}:case-spine"
         }
       }
     }]
@@ -90,9 +89,9 @@ resource "aws_iam_role_policy" "warehouse_read" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["redshift-data:ExecuteStatement", "redshift-data:GetStatementResult",
-                    "redshift-data:DescribeStatement"]
+        Effect = "Allow"
+        Action = ["redshift-data:ExecuteStatement", "redshift-data:GetStatementResult",
+        "redshift-data:DescribeStatement"]
         Resource = data.aws_redshift_cluster.warehouse.arn
       },
       {
@@ -185,12 +184,18 @@ resource "kubernetes_deployment" "app" {
           }
 
           liveness_probe {
-            http_get { path = "/api/overview" port = 8000 }
+            http_get {
+              path = "/api/overview"
+              port = 8000
+            }
             initial_delay_seconds = 10
             period_seconds        = 30
           }
           readiness_probe {
-            http_get { path = "/api/overview" port = 8000 }
+            http_get {
+              path = "/api/overview"
+              port = 8000
+            }
             initial_delay_seconds = 5
             period_seconds        = 10
           }
@@ -222,12 +227,12 @@ resource "kubernetes_ingress_v1" "app" {
     name      = "case-spine"
     namespace = var.namespace
     annotations = {
-      "kubernetes.io/ingress.class"                = "alb"
-      "alb.ingress.kubernetes.io/scheme"           = "internal"
-      "alb.ingress.kubernetes.io/target-type"      = "ip"
-      "alb.ingress.kubernetes.io/group.name"       = var.alb_group_name
-      "alb.ingress.kubernetes.io/certificate-arn"  = var.acm_certificate_arn
-      "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
+      "kubernetes.io/ingress.class"               = "alb"
+      "alb.ingress.kubernetes.io/scheme"          = "internal"
+      "alb.ingress.kubernetes.io/target-type"     = "ip"
+      "alb.ingress.kubernetes.io/group.name"      = var.alb_group_name
+      "alb.ingress.kubernetes.io/certificate-arn" = var.acm_certificate_arn
+      "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
     }
   }
   spec {

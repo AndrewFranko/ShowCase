@@ -150,8 +150,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-      - name: Format and validate
+      - name: Format and validate (enterprise collateral + the free-tier module that actually gets applied)
         run: |
-          terraform -chdir=infra fmt -check -diff
-          terraform -chdir=infra init -backend=false
-          terraform -chdir=infra validate
+          for dir in infra infra/aws-free-tier; do
+            terraform -chdir=$dir fmt -check -diff
+            terraform -chdir=$dir init -backend=false
+            terraform -chdir=$dir validate
+          done

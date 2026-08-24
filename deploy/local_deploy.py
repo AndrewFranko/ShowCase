@@ -123,6 +123,10 @@ def up() -> int:
          "--host", HOST, "--port", str(PORT),
          "--workers", str(WORKERS), "--log-level", "info"],
         cwd=ROOT, stdout=handle, stderr=subprocess.STDOUT,
+        # POSIX: own session/process group, so `down` can killpg the server tree
+        # without touching whoever launched us (in GitHub Actions the inherited
+        # pgid is the runner's own - killpg there SIGTERMs the entire runner).
+        start_new_session=(sys.platform != "win32"),
     )
     STATE.write_text(json.dumps({"pid": proc.pid, "port": PORT, "base": BASE}),
                      encoding="utf-8")
@@ -225,11 +229,19 @@ def kill_pid_tree(pid: int) -> None:
         subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
                        capture_output=True, text=True)
     else:
+        # Guard: a listener that predates `up` (an orphan, or a server started by
+        # hand) may share OUR process group; killpg would then take down this
+        # process and everything above it. In GitHub Actions that meant SIGTERMing
+        # the runner itself (exit 143, "runner has received a shutdown signal").
         try:
-            os.killpg(os.getpgid(pid), signal.SIGTERM)
+            pgid = os.getpgid(pid)
+            if pgid != os.getpgid(0):
+                os.killpg(pgid, signal.SIGTERM)
+                return
         except OSError:
-            with contextlib.suppress(OSError):
-                os.kill(pid, signal.SIGTERM)
+            pass
+        with contextlib.suppress(OSError):
+            os.kill(pid, signal.SIGTERM)
 
 
 def _port_is_free(timeout: float = 20.0) -> bool:
