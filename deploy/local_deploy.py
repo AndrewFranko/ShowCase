@@ -35,6 +35,10 @@ DB = ROOT / "data" / "spine.duckdb"
 
 HOST = os.environ.get("DEPLOY_HOST", "127.0.0.1")
 PORT = int(os.environ.get("DEPLOY_PORT", "8090"))
+# Bind to HOST, but probe via loopback when bound to all interfaces:
+# 0.0.0.0 / :: are bind addresses, not connectable destinations (Windows
+# rejects them outright, so health-gating against them never goes green).
+PROBE_HOST = "127.0.0.1" if HOST in ("0.0.0.0", "::") else HOST
 # Multi-worker uvicorn hands the listening socket to child processes; on Windows
 # that handoff is unreliable (workers intermittently wedge with WinError 10022 in
 # the log, and requests round-robined to the wedged worker hang forever - which
@@ -43,7 +47,7 @@ PORT = int(os.environ.get("DEPLOY_PORT", "8090"))
 import sys as _sys
 WORKERS = int(os.environ.get("DEPLOY_WORKERS",
                              "1" if _sys.platform == "win32" else "2"))
-BASE = f"http://{HOST}:{PORT}"
+BASE = f"http://{PROBE_HOST}:{PORT}"
 
 # Every route the client depends on. A deploy is not "up" because the index page
 # renders - it is up when every lens the page will call actually answers.
