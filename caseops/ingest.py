@@ -181,6 +181,20 @@ def fda_refresh() -> dict:
     return out
 
 
+def vendors_refresh() -> dict:
+    """Check every manufacturer's configured page for changes and alert lines."""
+    from caseops import vendors as v
+    con = connect()
+    con.execute(v.DDL)
+    cur = con.cursor()
+    out = v.refresh(cur)
+    con.commit()
+    con.close()
+    print(f"vendors: {out}")
+    return out
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "tick"
-    {"bootstrap": bootstrap, "tick": tick, "meshes": meshes, "fda": fda_refresh}[cmd]()
+    {"bootstrap": bootstrap, "tick": tick, "meshes": meshes,
+     "fda": fda_refresh, "vendors": vendors_refresh}[cmd]()
