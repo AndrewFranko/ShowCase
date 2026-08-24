@@ -330,7 +330,9 @@ def test_every_finding_visualisation_actually_paints(deployed, canvas_id):
 
 
 @pytest.mark.parametrize("foot_id,must_contain", [
-    ("footEffort", "Effort predicts impact"),
+    # The caption must state the >=60-min pooled rate, never a single-bucket
+    # rate: the old caption headlined the 80+ bucket, which holds one case.
+    ("footEffort", "60 min and over"),
     ("footDelta", "corrections moved"),
     ("footRelease", "lift"),
     ("footDetector", "detector generation is resolved at scan time"),

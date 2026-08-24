@@ -30,7 +30,7 @@
 body{margin:0;background:var(--ground);color:var(--ink);
   font:15px/1.6 "IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:1160px;margin:0 auto;padding:0 22px 90px}
-h1,h2,h3{font-family:Spectral,Georgia,serif;margin:0;text-wrap:balance}
+h1,h2,h3{font-family:"IBM Plex Sans",system-ui,sans-serif;margin:0;text-wrap:balance}
 .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
 .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--ink-3)}
@@ -38,42 +38,44 @@ h1,h2,h3{font-family:Spectral,Georgia,serif;margin:0;text-wrap:balance}
 button{font-family:inherit}
 canvas{display:block;width:100%;height:auto}
 
-header{padding:52px 0 26px}
-header h1{font-size:clamp(30px,5.2vw,50px);font-weight:700;letter-spacing:-.025em;
-  line-height:1.03;margin-top:14px}
-header .thesis{max-width:62ch;margin-top:18px;font-size:18px;line-height:1.55;color:var(--ink-2)}
-header .thesis b{color:var(--ink);font-weight:600}
+header{padding:16px 0 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:17px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
+header .brand{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
 .synthetic{display:inline-block;background:var(--warn-bg);color:var(--warn);
   border:1px solid color-mix(in srgb,var(--warn) 30%,transparent);padding:4px 10px;
-  font:600 10.5px "IBM Plex Mono",monospace;letter-spacing:.09em;text-transform:uppercase;margin-top:18px}
+  font:600 10px "IBM Plex Mono",monospace;letter-spacing:.09em;text-transform:uppercase}
 
 nav{display:flex;gap:1px;background:var(--rule);border:1px solid var(--rule);
   margin:26px 0 24px;overflow-x:auto;position:sticky;top:0;z-index:20}
 nav button{flex:1 0 auto;min-width:104px;background:var(--surface);border:0;
   border-bottom:2px solid transparent;padding:11px 13px;cursor:pointer;
-  font:600 14px Spectral,serif;color:var(--ink-2);white-space:nowrap}
+  font:600 13px "IBM Plex Sans",sans-serif;color:var(--ink-2);white-space:nowrap}
 nav button[aria-selected=true]{border-bottom-color:var(--accent);color:var(--ink)}
 nav button:hover{background:var(--surface-2)}
 .lens{display:none}.lens.on{display:block}
 
 .hero{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);
-  padding:30px 32px 26px;margin-bottom:24px}
-.hero .big{font-family:"IBM Plex Mono",monospace;font-size:clamp(48px,10vw,84px);
-  font-weight:600;letter-spacing:-.045em;line-height:.95;color:var(--accent);
-  font-variant-numeric:tabular-nums}
-.hero .cap{font-size:19px;line-height:1.45;margin-top:12px;max-width:56ch}
-.hero .sub{font-size:14px;color:var(--ink-3);margin-top:12px;max-width:70ch}
+  padding:16px 20px;margin-bottom:20px;display:grid;
+  grid-template-columns:auto minmax(0,1fr);gap:4px 22px;align-items:center}
+.hero .big{font-family:"IBM Plex Mono",monospace;font-size:clamp(30px,4.5vw,44px);
+  font-weight:600;letter-spacing:-.04em;line-height:1;color:var(--accent);
+  font-variant-numeric:tabular-nums;grid-row:span 2;align-self:center}
+.hero .cap{font-size:13.5px;line-height:1.45;margin:2px 0 0}
+.hero .sub{font-size:12px;color:var(--ink-3);margin:0;grid-column:2}
+.hero .statrow{grid-column:1/-1}
 
 .finding-card{background:var(--surface);border:1px solid var(--rule);box-shadow:var(--shadow);
-  margin-bottom:24px}
-.fc-head{padding:20px 24px 16px;border-bottom:1px solid var(--rule)}
-.fc-head .num{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--accent)}
-.fc-head h2{font-size:clamp(21px,3vw,27px);font-weight:600;letter-spacing:-.015em;
-  margin-top:8px;line-height:1.18}
-.fc-head p{margin:10px 0 0;font-size:15px;color:var(--ink-2);max-width:74ch;line-height:1.55}
-.fc-body{padding:22px 24px}
-.fc-foot{padding:16px 24px 18px;border-top:1px solid var(--rule);background:var(--surface-2);
-  font-size:14px;line-height:1.55}
+  margin-bottom:0;display:flex;flex-direction:column}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:18px;
+  margin-bottom:20px}
+@media (max-width:520px){.fgrid{grid-template-columns:1fr}}
+.fc-head{padding:12px 16px 10px;border-bottom:1px solid var(--rule)}
+.fc-head .num{font:600 9.5px "IBM Plex Mono",monospace;letter-spacing:.12em;color:var(--accent)}
+.fc-head h2{font-size:15px;font-weight:600;letter-spacing:0;margin-top:4px;line-height:1.3}
+.fc-head p{margin:5px 0 0;font-size:12.5px;color:var(--ink-3);max-width:none;line-height:1.5}
+.fc-body{padding:14px 16px;flex:1}
+.fc-foot{padding:10px 16px 12px;border-top:1px solid var(--rule);background:var(--surface-2);
+  font-size:12.5px;line-height:1.5}
 .fc-foot b{color:var(--accent)}
 .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;
   font:11.5px "IBM Plex Mono",monospace;color:var(--ink-3)}
@@ -95,7 +97,7 @@ nav button:hover{background:var(--surface-2)}
 .kpi.hi .v{color:var(--accent)}
 .panel{background:var(--surface);border:1px solid var(--rule);margin-bottom:22px;box-shadow:var(--shadow)}
 .ph{padding:15px 19px 13px;border-bottom:1px solid var(--rule)}
-.ph h2{font-size:19px;font-weight:600;margin-top:5px}
+.ph h2{font-size:15px;font-weight:600;margin-top:4px}
 .ph p{margin:7px 0 0;font-size:13.5px;color:var(--ink-3);max-width:84ch;line-height:1.5}
 .pb{padding:17px 19px}
 .tw{overflow-x:auto}
@@ -139,7 +141,7 @@ select,.btn{font:12.5px "IBM Plex Mono",monospace;padding:6px 11px;background:va
 footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
   font-size:12.5px;color:var(--ink-3);line-height:1.6}
 @media(max-width:640px){.wrap{padding:0 15px 70px}.trace .hop{grid-template-columns:1fr;gap:2px}
-  .hero{padding:22px}.fc-body{padding:16px}}
+  .hero{padding:14px 16px}.fc-body{padding:12px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -147,40 +149,40 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
 <div class="wrap">
 
 <header>
-  <span class="eyebrow">One case ledger &middot; seven source systems &middot; read-only</span>
-  <h1>What the humans are actually for</h1>
-  <p class="thesis">Cost of revenue is analyst minutes, and the margin plan is to automate
-  them away. Before that can be done safely, someone has to answer a question nobody
-  currently measures: <b>when a person corrects the machine, does the patient's answer
-  change?</b></p>
+  <div class="brand">
+    <h1>Case Spine</h1>
+    <span class="eyebrow">one case ledger &middot; 7 source systems &middot; read-only</span>
+  </div>
   <span class="synthetic">Synthetic data &middot; no Heartflow records</span>
-  <div class="ctl" style="margin-top:22px;max-width:680px">
+  <div class="ctl" style="margin:0 0 0 auto;flex:1 1 320px;max-width:520px">
     <input id="askIn" type="text" placeholder="Ask the spine — e.g. any confirmed regressions?"
-      style="flex:1 1 300px;font:13.5px 'IBM Plex Sans',sans-serif;padding:9px 12px;
+      style="flex:1 1 220px;font:13px 'IBM Plex Sans',sans-serif;padding:7px 11px;
       background:var(--surface);color:var(--ink);border:1px solid var(--rule-2)">
     <button class="btn" id="askBtn">Ask</button>
   </div>
-  <div id="askOut" class="verdict" style="display:none;max-width:680px;margin-top:10px"></div>
+  <div id="askOut" class="verdict" style="display:none;flex-basis:100%;margin:0"></div>
 </header>
 
 <nav id="nav" role="tablist"></nav>
 
 <section class="lens on" id="l-findings">
   <div class="hero">
-    <span class="eyebrow">The number this portal exists to produce</span>
     <div class="big" id="heroBig">&mdash;</div>
-    <p class="cap" id="heroCap">&hellip;</p>
+    <div style="min-width:0">
+      <span class="eyebrow">Confirmation share of analyst time</span>
+      <p class="cap" id="heroCap">&hellip;</p>
+    </div>
     <p class="sub" id="heroSub"></p>
     <div class="statrow" id="heroStats"></div>
   </div>
 
+  <div class="fgrid">
   <article class="finding-card">
     <div class="fc-head">
-      <span class="num">FINDING 01</span>
-      <h2>The expensive cases are not the ones that matter</h2>
-      <p>Every accepted case gets a human. Each bar is the analyst-hours spent at that level
-      of effort, split by whether the correction moved an FFR value across the 0.80 decision
-      threshold.</p>
+      <span class="num">TELEMETRY</span>
+      <h2>Analyst-hours by effort band</h2>
+      <p>Accepted-case hours per effort band, split by whether the correction crossed the
+      0.80 decision threshold.</p>
     </div>
     <div class="fc-body">
       <canvas id="vizEffort" height="300"></canvas>
@@ -194,10 +196,10 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
 
   <article class="finding-card">
     <div class="fc-head">
-      <span class="num">FINDING 02</span>
-      <h2>Most correction is confirmation</h2>
-      <p>How far each correction moved the worst vessel's FFR. The mass at zero is work that
-      produced no diagnostic change. The red tail is where the human earned the case.</p>
+      <span class="num">CORRECTIONS</span>
+      <h2>Correction depth (&Delta;FFR)</h2>
+      <p>How far each correction moved the worst vessel's FFR. Mass at zero produced no
+      diagnostic change.</p>
     </div>
     <div class="fc-body">
       <canvas id="vizDelta" height="270"></canvas>
@@ -211,12 +213,10 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
 
   <article class="finding-card">
     <div class="fc-head">
-      <span class="num">FINDING 03</span>
-      <h2>A release broke one scanner vendor and nothing else noticed</h2>
-      <p>Actionable-correction rate by release, one line per scanner manufacturer. A
-      regression confined to a single vendor's reconstructions is invisible in an aggregate
-      metric &mdash; and invisible in any throughput dashboard, because the minutes barely
-      moved.</p>
+      <span class="num">RELEASE MONITOR</span>
+      <h2>Actionable rate by release &times; scanner</h2>
+      <p>One line per manufacturer. A vendor-confined regression is invisible in the
+      aggregate.</p>
     </div>
     <div class="fc-body">
       <canvas id="vizRelease" height="290"></canvas>
@@ -227,12 +227,10 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
 
   <article class="finding-card">
     <div class="fc-head">
-      <span class="num">FINDING 04</span>
-      <h2>Two sites' plaque numbers fell by a third overnight</h2>
-      <p>Median total plaque volume over time. Photon-counting detectors measure roughly a
-      third less plaque than energy-integrating ones, and thresholds derived from the old
-      detector do not transfer. Nothing failed: no rejection, no complaint, no alert. The
-      numbers simply stepped.</p>
+      <span class="num">DETECTOR MONITOR</span>
+      <h2>Plaque volume by detector generation</h2>
+      <p>Median total plaque volume over time, migrated sites vs a never-migrated
+      control.</p>
     </div>
     <div class="fc-body">
       <canvas id="vizDetector" height="300"></canvas>
@@ -247,11 +245,10 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
 
   <article class="finding-card">
     <div class="fc-head">
-      <span class="num">FINDING 05</span>
-      <h2>Difficulty is not spread evenly across patients</h2>
-      <p>Each dot is a subgroup with its 95% confidence interval. Distance from the
-      best-performing arm is the disparity. Being statistically detectable is not the same
-      as being worth acting on.</p>
+      <span class="num">SUBGROUPS</span>
+      <h2>Disparity vs best-performing arm</h2>
+      <p>Each dot is a subgroup with its 95% CI. Escalation requires significance, effect
+      size and arm size together.</p>
     </div>
     <div class="fc-body">
       <canvas id="vizDisparity" height="330"></canvas>
@@ -263,6 +260,7 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
     </div>
     <div class="fc-foot" id="footDisparity">&hellip;</div>
   </article>
+  </div>
 
   <div class="note">
     <span class="eyebrow">What ties these together</span>
@@ -281,8 +279,8 @@ footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--rule);
   <div class="kpis" id="kpis"></div>
   <div class="panel"><div class="ph"><span class="eyebrow">Telemetry</span>
     <h2>Where the minutes go</h2>
-    <p>Analyst effort against auto-segmentation confidence. Effort is well predicted by
-    confidence; diagnostic impact is only loosely related to either.</p></div>
+    <p>Analyst effort against auto-segmentation confidence. Confidence predicts effort;
+    impact rises with effort, but every band remains mostly confirmation.</p></div>
     <div class="pb">
       <canvas id="vizConfidence" height="260"></canvas>
       <div class="legend">
@@ -634,9 +632,8 @@ async function loadCore(){
   $('heroCap').innerHTML=`of all analyst time went to cases where the human
     <b>confirmed the machine rather than correcting it</b> &mdash; ${num(w.cases)} cases,
     ${num(w.hours)} hours.`;
-  $('heroSub').textContent='That is not waste. It is the cost of a safety control nobody '+
-    'has measured. Removing it is the margin plan; knowing which cases can safely lose it '+
-    'is the prerequisite.';
+  $('heroSub').textContent='The unmeasured cost of a safety control. The automation '+
+    'question is which cases can safely lose it.';
   $('heroStats').innerHTML=[
     [num(o.accepted_cases),'cases analysed'],
     [num(e.total_hours)+' h','analyst time'],
@@ -663,12 +660,11 @@ function drawEffort(){
   });
   x.fillStyle=css('--ink-3');x.textAlign='center';
   x.fillText('analyst minutes per case  ->    red % = share that changed the answer',L+pw/2,T-6);
-  const f=d[0],l=d[d.length-1];
-  $('footEffort').innerHTML=`Effort predicts impact: cases under 10 minutes changed the answer
-    <b>${pct(f.actionable_rate,1)}</b> of the time; cases over an hour,
-    <b>${pct(l.actionable_rate,1)}</b>. That is the good news &mdash; difficulty is visible
-    <i>before</i> a human touches the case, which is what makes a stratified automation
-    argument possible at all.
+  const f=d[0],long=d.filter(b=>b.min_bucket>=60);
+  const lc=long.reduce((s,b)=>s+b.cases,0),la=long.reduce((s,b)=>s+b.actionable,0);
+  $('footEffort').innerHTML=`Under 10 min, <b>${pct(f.actionable_rate,1)}</b> of cases changed
+    the answer; 60 min and over, <b>${pct(lc?la/lc:0,1)}</b> (${la}/${lc}). Difficulty is
+    visible before a human touches the case.
     <a href="#lens=ops" style="color:var(--accent-2);font-weight:600">Frontier &rarr;</a>`;
 }
 
@@ -689,9 +685,7 @@ function drawDelta(){
   x.fillText('|delta FFR| produced by the correction  ->',L+pw/2,h-8);
   const tot=HIST.reduce((a,b)=>a+b.unchanged+b.crossed,0),f=HIST[0];
   $('footDelta').innerHTML=`<b>${pct((f.unchanged+f.crossed)/tot,0)}</b> of corrections moved
-    the value by less than 0.005 &mdash; below the reproducibility of invasive FFR itself.
-    The question is not whether analysts are careful. It is whether this particular care is
-    buying a different answer.`;
+    the value by less than 0.005 &mdash; below the reproducibility of invasive FFR itself.`;
 }
 
 function drawRelease(){
@@ -727,11 +721,10 @@ function drawRelease(){
   });
   const reg=REL.find(r=>r.signal==='regression');
   $('footRelease').innerHTML=reg
-    ?`<b>${reg.model_version} on ${reg.scanner_make}</b> pushed the rate to
-      <b>${pct(val(reg),2)}</b> &mdash; a ${reg.lift_vs_first_release.toFixed(2)}x lift,
-      p&nbsp;=&nbsp;${reg.p_value.toFixed(4)} &mdash; while every other manufacturer stayed
-      flat. Median analyst minutes barely moved, so nothing in a throughput view would have
-      surfaced it. <a href="#release=${reg.model_version}" style="color:var(--accent-2);font-weight:600">See its complaints &rarr;</a>`
+    ?`<b>${reg.model_version} on ${reg.scanner_make}</b>: <b>${pct(val(reg),2)}</b>,
+      ${reg.lift_vs_first_release.toFixed(2)}x lift, p&nbsp;=&nbsp;${reg.p_value.toFixed(4)};
+      other manufacturers flat. Minutes barely moved &mdash; invisible in throughput.
+      <a href="#release=${reg.model_version}" style="color:var(--accent-2);font-weight:600">Complaints &rarr;</a>`
     :'No confirmed regression in this window.';
   $('legRelease').innerHTML=makes.map(m=>
     `<span><i style="background:${css(colOf[m])}"></i>${m}</span>`).join('');
@@ -769,11 +762,10 @@ function drawDetector(){
   x.fillStyle=css('--ink-3');x.textAlign='center';x.fillText('day  ->',L+pw/2,h-8);
   x.save();x.translate(16,T+ph/2);x.rotate(-Math.PI/2);x.textAlign='center';
   x.fillText('median total plaque volume (mm3)',0,0);x.restore();
-  $('footDetector').innerHTML=`Any nomogram percentile derived from energy-integrating data now
-    misclassifies every patient at these sites. The dashed control site shows what no step
-    looks like. <b>Detectable only because detector generation is resolved at scan time on the
-    case row</b> &mdash; carry the site's current detector instead and the history silently
-    rewrites itself. <a href="#site=${DET.migrated[0].site_id}" style="color:var(--accent-2);font-weight:600">Open the site card &rarr;</a>`;
+  $('footDetector').innerHTML=`PCD measures roughly a third less plaque; EID-derived
+    thresholds do not transfer. <b>Detected only because detector generation is resolved at
+    scan time on the case row.</b>
+    <a href="#site=${DET.migrated[0].site_id}" style="color:var(--accent-2);font-weight:600">Site card &rarr;</a>`;
 }
 
 function drawDisparity(){
@@ -801,11 +793,9 @@ function drawDisparity(){
   x.fillStyle=css('--ink-3');x.textAlign='center';
   x.fillText('actionable-correction rate  ->',L+pw/2,h-8);
   const esc=DISP.escalations.length,sig=arms.filter(a=>a.fdr_significant&&!a.escalate).length;
-  $('footDisparity').innerHTML=`<b>${esc}</b> arm(s) escalated. <b>${sig}</b> more are
-    statistically significant but fall below the ${DISP.policy.min_disparity_ratio}x effect
-    floor and are deliberately <i>not</i> escalated &mdash; on this many cases a small gap is
-    easy to detect and not worth acting on. Escalation requires significance <i>and</i> effect
-    size <i>and</i> a minimum arm size, all three.
+  $('footDisparity').innerHTML=`<b>${esc}</b> arm(s) escalated; <b>${sig}</b> significant
+    but below the ${DISP.policy.min_disparity_ratio}x effect floor, deliberately not
+    escalated. Escalation = significance <i>and</i> effect <i>and</i> arm size.
     <a href="#lens=quality" style="color:var(--accent-2);font-weight:600">Full table &rarr;</a>`;
 }
 
