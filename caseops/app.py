@@ -275,6 +275,51 @@ def forecast(con: Con):
         return ml.workload(cur)
 
 
+# ---------------------------------------------------------------- devices & FDA
+@app.get("/api/devices/stats")
+def device_stats(con: Con):
+    """Per-model fleet statistics: workload, effort and 3D change level."""
+    return q(con, """
+        SELECT d.make, d.model,
+               count(DISTINCT d.device_id)                                  AS fleet,
+               count(DISTINCT d.hospital_id)                                AS hospitals,
+               count(DISTINCT d.device_id) FILTER (WHERE d.detector='PCD')  AS pcd_units,
+               count(t.ticket_id)                                           AS tickets,
+               count(t.ticket_id) FILTER (WHERE t.status <> 'resolved')     AS open_tickets,
+               round(percentile_cont(0.5) WITHIN GROUP (ORDER BY t.actual_min)::numeric, 0)
+                                                                            AS median_min,
+               round(avg(g.blocks_changed_pct)::numeric, 1)                 AS mean_change_pct,
+               round(avg(g.mean_disp_mm)::numeric, 2)                       AS mean_disp_mm
+        FROM device d
+        LEFT JOIN ticket t ON t.device_id = d.device_id
+        LEFT JOIN geometry_delta g ON g.ticket_id = t.ticket_id
+        GROUP BY d.make, d.model ORDER BY tickets DESC""")
+
+
+@app.get("/api/fda/signals")
+def fda_signals(con: Con):
+    """Cached openFDA monitoring per fleet model: MAUDE totals, top reported
+    problems, recent event narratives, recalls. Read-only against the cache."""
+    con.execute(__import__("caseops.fda", fromlist=["DDL"]).DDL)
+    rows_ = q(con, """
+        SELECT f.make, f.model, f.fetched_at, f.payload,
+               (SELECT count(*) FROM device d
+                WHERE d.make = f.make AND d.model = f.model) AS fleet
+        FROM fda_signal f ORDER BY (f.payload->>'maude_total')::int DESC NULLS LAST""")
+    return {"signals": rows_,
+            "disclaimer": ("openFDA: unvalidated data; not for medical-care "
+                           "decisions. Model-line search terms - counts are for "
+                           "the product family, not one SKU.")}
+
+
+@app.post("/api/fda/refresh")
+def fda_refresh_endpoint(con: Con):
+    from caseops import fda as fda_mod
+    con.execute(fda_mod.DDL)
+    with con.cursor() as cur:
+        return fda_mod.refresh(cur)
+
+
 # ---------------------------------------------------------------- client
 @app.get("/", include_in_schema=False)
 def index():

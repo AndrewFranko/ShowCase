@@ -168,6 +168,19 @@ def meshes(sample: int = 500, rng: random.Random | None = None) -> int:
     return len(todo)
 
 
+def fda_refresh() -> dict:
+    """Pull live MAUDE + recall signals from openFDA for every fleet model."""
+    from caseops import fda as fda_mod
+    con = connect()
+    con.execute(fda_mod.DDL)
+    cur = con.cursor()
+    out = fda_mod.refresh(cur)
+    con.commit()
+    con.close()
+    print(f"fda: {out}")
+    return out
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "tick"
-    {"bootstrap": bootstrap, "tick": tick, "meshes": meshes}[cmd]()
+    {"bootstrap": bootstrap, "tick": tick, "meshes": meshes, "fda": fda_refresh}[cmd]()
