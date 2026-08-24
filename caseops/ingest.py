@@ -46,10 +46,16 @@ CREATE TABLE IF NOT EXISTS geometry_delta (
 
 
 def bootstrap() -> None:
+    from caseops import fda as fda_mod
     from caseops import seed
+    from caseops import vendors as vendors_mod
     seed.main()
     con = connect()
+    # every auxiliary table exists from day zero - endpoints must never depend
+    # on which ingest command happened to run first (a CI-only crash taught this)
     con.execute(DDL)
+    con.execute(fda_mod.DDL)
+    con.execute(vendors_mod.DDL)
     con.commit()
     con.close()
     print("bootstrap complete")

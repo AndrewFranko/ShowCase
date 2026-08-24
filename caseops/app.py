@@ -397,6 +397,8 @@ def device_detail(device_id: int, con: Con):
                  [d["make"], d["model"]])
     d["fda_signal"] = fda_rows[0]["payload"] if fda_rows else None
     d["fda_fetched_at"] = fda_rows[0]["fetched_at"] if fda_rows else None
+    from caseops import vendors as vendors_mod
+    con.execute(vendors_mod.DDL)
     va = q(con, "SELECT * FROM vendor_alert WHERE make = %s", [d["make"]])
     d["vendor_page"] = va[0] if va else None
     return d
