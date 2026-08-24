@@ -21,9 +21,11 @@ import os
 import urllib.error
 import urllib.request
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+# The dated aliases retire (gemini-2.0-flash 404s as of Aug 2026);
+# "-latest" tracks the current flash model and survives retirements.
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-TIMEOUT_S = 30
+TIMEOUT_S = 75
 
 SYSTEM = (
     "You are a catch-up assistant for medical-image analysts. Using ONLY the "
@@ -36,11 +38,36 @@ SYSTEM = (
 )
 
 
+_ENV_FILE = __import__("pathlib").Path(__file__).resolve().parent.parent / ".env"
+
+
+def _from_env_file(name: str) -> str:
+    """Read ONE variable from the repo-root .env (gitignored). Only the two key
+    names are ever read; nothing else in the file is loaded into the process."""
+    try:
+        raw = _ENV_FILE.read_text(encoding="utf-8-sig")
+    except OSError:
+        return ""
+    for line in raw.splitlines():
+        line = line.strip()
+        if line.startswith(name + "="):
+            return line.split("=", 1)[1].strip().strip("'\"")
+    return ""
+
+
 def api_key() -> str:
-    return os.environ.get("GEMINI_API_KEY", "")
+    # GEMINI_API_KEY preferred; GOOGLE_API_KEY is the same credential under
+    # Google AI Studio's other conventional name. Shell env wins; the repo-root
+    # .env is the fallback so the key survives any process manager.
+    return (os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")
+            or _from_env_file("GEMINI_API_KEY") or _from_env_file("GOOGLE_API_KEY"))
+
+
+_last_error: str | None = None
 
 
 def _gemini(context: dict) -> str | None:
+    global _last_error
     key = api_key()
     if not key:
         return None
@@ -59,7 +86,14 @@ def _gemini(context: dict) -> str | None:
         parts = payload["candidates"][0]["content"]["parts"]
         text = "".join(p.get("text", "") for p in parts).strip()
         return text or None
-    except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError):
+    except urllib.error.HTTPError as exc:
+        try:
+            _last_error = f"HTTP {exc.code}: " + exc.read().decode()[:200]
+        except OSError:
+            _last_error = f"HTTP {exc.code}"
+        return None
+    except (urllib.error.URLError, OSError, ValueError, KeyError, IndexError) as exc:
+        _last_error = f"{type(exc).__name__}: {str(exc)[:150]}"
         return None
 
 
@@ -100,7 +134,8 @@ def device_briefing(context: dict) -> dict:
                              "no patient data, no analyst identity"}
     else:
         prov = {"agent": "deterministic composer",
-                "note": ("GEMINI_API_KEY not set or call failed - set the key to "
-                         "get the LLM briefing; content is the same governed context")}
+                "note": (f"gemini call failed: {_last_error}" if api_key() and _last_error
+                         else "no GEMINI_API_KEY / GOOGLE_API_KEY - set one (env or "
+                              "repo-root .env) for the LLM briefing")}
         text = _deterministic(context)
     return {"briefing": text, "provenance": prov}
